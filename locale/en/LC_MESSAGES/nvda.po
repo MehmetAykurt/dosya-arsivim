@@ -1,0 +1,413 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Dosya Arsivim 26.8.1\n"
+"PO-Revision-Date: 2026-07-31 00:00+0300\n"
+"Last-Translator: Mehmet Aykurt\n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Dosya Arşivim"
+msgstr "File Archive"
+
+msgid "Dosya Arşivim açılamadı. Ayrıntılar için NVDA günlüğünü kontrol edin."
+msgstr "File Archive could not be opened. Check the NVDA log for details."
+
+msgid "Etkin bir hesap bulunamadı. Giriş yapmak veya yeni bir hesap oluşturmak ister misiniz?"
+msgstr "No active account was found. Would you like to sign in or create a new account?"
+
+msgid "Sunucu isteği tamamlanamadı."
+msgstr "The server request could not be completed."
+
+msgid "Sunucuya bağlantı kurulamadı."
+msgstr "A connection to the server could not be established."
+
+msgid "Sunucu beklenmeyen bir yanıt gönderdi."
+msgstr "The server sent an unexpected response."
+
+msgid "İşlem tamamlanamadı."
+msgstr "The operation could not be completed."
+
+msgid "Kısa süre içinde çok fazla kod istendi. Lütfen bir süre bekleyip yeniden deneyin."
+msgstr "Too many codes were requested in a short time. Please wait a while and try again."
+
+msgid "Bu e-posta adresiyle kayıtlı bir hesap bulunamadı."
+msgstr "No account was found for this email address."
+
+msgid "Güvenlik belirteci alınamadı."
+msgstr "The security token could not be obtained."
+
+msgid "Oturum bilgisi kaydedilemedi."
+msgstr "The session information could not be saved."
+
+msgid "Oturum bilgisi silinemedi."
+msgstr "The session information could not be deleted."
+
+msgid "İşlem sırasında beklenmeyen bir hata oluştu."
+msgstr "An unexpected error occurred during the operation."
+
+msgid "&Bağlan\tAlt+B"
+msgstr "&Connect\tAlt+B"
+
+msgid "Bağlantıyı &kes\tAlt+K"
+msgstr "Disconnect\tAlt+K"
+
+msgid "Çıkış\tAlt+F4"
+msgstr "Exit\tAlt+F4"
+
+msgid "Bağlantıyı kes"
+msgstr "Disconnect"
+
+msgid "Mevcut hesap bilgilerinizi kaldırmak istediğinizden emin misiniz? Bu işlem hesabınızı silmez. Dilediğiniz zaman tekrar giriş yapabilirsiniz."
+msgstr "Are you sure you want to remove the current account information? This will not delete your account. You can sign in again at any time."
+
+msgid "&Hesap"
+msgstr "&Account"
+
+msgid "Bu klasör boş."
+msgstr "This folder is empty."
+
+msgid "Önceki sayfa"
+msgstr "Previous page"
+
+msgid "Sonraki sayfa"
+msgstr "Next page"
+
+msgid "Bilinmiyor"
+msgstr "Unknown"
+
+msgid "Metin belgesi"
+msgstr "Text document"
+
+msgid "WAVE ses dosyası"
+msgstr "WAVE audio file"
+
+msgid "{boyut} bayt"
+msgstr "{boyut} bytes"
+
+msgid "KB"
+msgstr "KB"
+
+msgid "MB"
+msgstr "MB"
+
+msgid "GB"
+msgstr "GB"
+
+msgid "TB"
+msgstr "TB"
+
+msgid "{boyut:.1f} {birim}"
+msgstr "{boyut:.1f} {birim}"
+
+msgid "{uzanti} dosyası"
+msgstr "{uzanti} file"
+
+msgid "Dosya adı: {ad}"
+msgstr "File name: {ad}"
+
+msgid "Tür: {tur}"
+msgstr "Type: {tur}"
+
+msgid "Boyut: {boyut}"
+msgstr "Size: {boyut}"
+
+msgid "Yüklenme zamanı: {zaman}"
+msgstr "Upload time: {zaman}"
+
+msgid "Durum: Yüklendi"
+msgstr "Status: Uploaded"
+
+msgid "Klasör içeriği yükleniyor."
+msgstr "Loading folder contents."
+
+msgid "Yükleme bekliyor: {dosya}"
+msgstr "Waiting to upload: {dosya}"
+
+msgid "Yükleme hatası: {dosya}"
+msgstr "Upload error: {dosya}"
+
+msgid "Arşivde işleniyor: {dosya}"
+msgstr "Processing in the archive: {dosya}"
+
+msgid "Arşivde işleniyor: %{oran} {dosya}"
+msgstr "Processing in the archive: %{oran} {dosya}"
+
+msgid "Arşivde işleniyor: %100 {dosya}"
+msgstr "Processing in the archive: 100% {dosya}"
+
+msgid "&Ayarlar"
+msgstr "&Settings"
+
+msgid "Ayarlar"
+msgstr "Settings"
+
+msgid "Bildirimleri göster"
+msgstr "Show notifications"
+
+msgid "Türetilmiş dosyaları göster"
+msgstr "Show derived files"
+
+msgid "Ayarlar kaydedilemedi."
+msgstr "Settings could not be saved."
+
+msgid "{dosya} dosyasının yüklemesi tamamlandı."
+msgstr "Upload completed for {dosya}."
+
+msgid "Herhangi bir hesap tanımlı değil."
+msgstr "No account has been configured."
+
+msgid "Resimler"
+msgstr "Pictures"
+
+msgid "Ses ve Müzik"
+msgstr "Audio and Music"
+
+msgid "Videolar"
+msgstr "Videos"
+
+msgid "Belgeler"
+msgstr "Documents"
+
+msgid "Uygulamalar"
+msgstr "Applications"
+
+msgid "Sıkıştırılmış Dosyalar"
+msgstr "Compressed Files"
+
+msgid "Yedekler"
+msgstr "Backups"
+
+msgid "Diğer"
+msgstr "Other"
+
+msgid "Dosya yükle"
+msgstr "Upload file"
+
+msgid "Dosya &yükle\tAlt+Y"
+msgstr "File &upload\tAlt+U"
+
+msgid "İndir"
+msgstr "Download"
+
+msgid "&İndir\tAlt+İ"
+msgstr "&Download\tAlt+D"
+
+msgid "İndiriliyor"
+msgstr "Downloading"
+
+msgid "Dosya indiriliyor."
+msgstr "The file is downloading."
+
+msgid "İndirme işlemi başarıyla tamamlandı."
+msgstr "The download completed successfully."
+
+msgid "İndirme iptal edildi."
+msgstr "The download was cancelled."
+
+msgid "Dosya indirilemedi."
+msgstr "The file could not be downloaded."
+
+msgid "Bağlantıyı panoya kopyala"
+msgstr "Copy link to clipboard"
+
+msgid "&Bağlantıyı panoya kopyala\tAlt+B"
+msgstr "&Copy link to clipboard\tAlt+C"
+
+msgid "Dosya bilgileri"
+msgstr "File information"
+
+msgid "&Dosya bilgileri\tAlt+D"
+msgstr "&File information\tAlt+F"
+
+msgid "Ad: {ad}"
+msgstr "Name: {ad}"
+
+msgid "Bağlantı: {bağlantı}"
+msgstr "Link: {bağlantı}"
+
+msgid "&Bilgileri panoya kopyala"
+msgstr "&Copy information to clipboard"
+
+msgid "Dosya bilgileri panoya kopyalandı."
+msgstr "The file information was copied to the clipboard."
+
+msgid "Bağlantı panoya kopyalandı."
+msgstr "The link was copied to the clipboard."
+
+msgid "Dosya yüklemek için önce bir klasöre girin."
+msgstr "Enter a folder before uploading a file."
+
+msgid "Tüm dosyalar (*.*)|*.*"
+msgstr "All files (*.*)|*.*"
+
+msgid "Panoya erişilemedi."
+msgstr "The clipboard could not be accessed."
+
+msgid "Panoda yüklenecek bir dosya bulunamadı."
+msgstr "No file to upload was found on the clipboard."
+
+msgid "Dosya yükleniyor: {dosya}"
+msgstr "Uploading file: {dosya}"
+
+msgid "Dosya yükleniyor: {dosya}, yüzde {oran}"
+msgstr "Uploading file: {dosya}, {oran} percent"
+
+msgid "Dosya yüklendi: {dosya}"
+msgstr "File uploaded: {dosya}"
+
+msgid "Dosya yüklenemedi."
+msgstr "The file could not be uploaded."
+
+msgid "Seçilen dosya bulunamadı."
+msgstr "The selected file was not found."
+
+msgid "Dosya listesi alınamadı."
+msgstr "The file list could not be retrieved."
+
+msgid "&Sil\tAlt+S"
+msgstr "De&lete\tAlt+L"
+
+msgid "Dosyayı sil"
+msgstr "Delete file"
+
+msgid "{dosya} adlı dosyayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+msgstr "Are you sure you want to delete the file named {dosya}? This action cannot be undone."
+
+msgid "Dosya silinemedi."
+msgstr "The file could not be deleted."
+
+msgid "Hesap bilgileriniz kaldırıldı."
+msgstr "Your account information has been removed."
+
+msgid "&Kapat"
+msgstr "&Close"
+
+msgid "Bağlan"
+msgstr "Connect"
+
+msgid "Giriş yap"
+msgstr "Sign in"
+
+msgid "&Giriş yap"
+msgstr "&Sign in"
+
+msgid "Yeni hesap oluştur"
+msgstr "Create a new account"
+
+msgid "&Yeni hesap oluştur"
+msgstr "&Create a new account"
+
+msgid "İ&ptal"
+msgstr "Cancel"
+
+msgid "E-posta adresi"
+msgstr "Email address"
+
+msgid "&Giriş kodu gönder"
+msgstr "&Send sign-in code"
+
+msgid "Geçerli bir e-posta adresi girin."
+msgstr "Enter a valid email address."
+
+msgid "Hesabınıza bağlanıldı."
+msgstr "Connected to your account."
+
+msgid "Görünen ad"
+msgstr "Display name"
+
+msgid "Aktivasyon kodu &gönder"
+msgstr "Send &activation code"
+
+msgid "Görünen ad 3 ila 40 karakter olmalı; Türkçe karakter içermemeli, İngilizce harf veya rakamla başlayıp bitmelidir. Arada İngilizce harfler, rakamlar, nokta, alt çizgi ve kısa çizgi kullanılabilir."
+msgstr "The display name must be 3 to 40 characters, must not contain Turkish characters, and must begin and end with an English letter or a number. English letters, numbers, periods, underscores, and hyphens may be used in between."
+
+msgid "Hesabı doğrula"
+msgstr "Verify account"
+
+msgid "Girişi doğrula"
+msgstr "Verify sign-in"
+
+msgid "E-posta adresinize gönderilen altı haneli kodu girin."
+msgstr "Enter the six-digit code sent to your email address."
+
+msgid "&Doğrula"
+msgstr "&Verify"
+
+msgid "Altı haneli kodu girin."
+msgstr "Enter the six-digit code."
+
+msgid "Arşiv erişim anahtarı oluşturulamadı."
+msgstr "The archive access key could not be created."
+
+msgid "Varsayılan klasörler oluşturulamadı."
+msgstr "The default folders could not be created."
+
+msgid "Yüklemeleri &duraklat"
+msgstr "&Pause uploads"
+
+msgid "Yüklemeleri &başlat"
+msgstr "&Start uploads"
+
+msgid "Yüklemeleri &iptal et"
+msgstr "&Cancel uploads"
+
+msgid "Hatalı yüklemeleri &yeniden dene"
+msgstr "&Retry failed uploads"
+
+msgid "Yeniden denenecek hatalı yükleme bulunamadı."
+msgstr "There are no failed uploads to retry."
+
+msgid "Hatalı yüklemeleri yeniden dene"
+msgstr "Retry failed uploads"
+
+msgid "&Yüklemeler"
+msgstr "&Uploads"
+
+msgid "&Yardım"
+msgstr "&Help"
+
+msgid "&Kullanım kılavuzu"
+msgstr "&User guide"
+
+msgid "&Hakkında"
+msgstr "&About"
+
+msgid "Hakkında"
+msgstr "About"
+
+msgid "Kullanım kılavuzu"
+msgstr "User guide"
+
+msgid "Kullanım kılavuzu dosyası bulunamadı."
+msgstr "The user guide file was not found."
+
+msgid "Kullanım kılavuzu açılamadı."
+msgstr "The user guide could not be opened."
+
+msgid "Sürüm: {surum}"
+msgstr "Version: {surum}"
+
+msgid "Geliştiren: Mehmet Aykurt"
+msgstr "Developed by: Mehmet Aykurt"
+
+msgid "E-posta: m.aykurt38@gmail.com"
+msgstr "Email: m.aykurt38@gmail.com"
+
+msgid "Web sitesi: mehmetaykurt.com.tr"
+msgstr "Website: mehmetaykurt.com.tr"
+
+msgid "İptal edilecek yükleme bulunamadı."
+msgstr "There are no uploads to cancel."
+
+msgid "Yüklemeleri iptal et"
+msgstr "Cancel uploads"
+
+msgid ""
+"Yükleme işlemleri iptal edilecek.\n"
+"Devam etmek istiyor musunuz?"
+msgstr ""
+"Upload operations will be cancelled.\n"
+"Do you want to continue?"

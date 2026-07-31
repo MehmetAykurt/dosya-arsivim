@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>My File Archive User Guide</title>
+
+<style>
+:root {
+	--primary: #17365d;
+	--secondary: #284f7c;
+	--border: #b8c9dc;
+	--text: #222;
+	--background: #ffffff;
+	--note-bg: #eef6ee;
+	--note-border: #357a38;
+	--warning-bg: #fff4df;
+	--warning-border: #b36b00;
+}
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	line-height: 1.7;
+	max-width: 1024px;
+	margin: 0 auto;
+	padding: 20px;
+	color: var(--text);
+	background: var(--background);
+}
+
+header {
+	border-bottom: 2px solid var(--primary);
+	padding-bottom: 1em;
+	margin-bottom: 2em;
+}
+
+h1,
+h2,
+h3 {
+	color: var(--primary);
+}
+
+h1 {
+	font-size: 2em;
+}
+
+h2 {
+	margin-top: 2em;
+	border-bottom: 1px solid var(--border);
+	padding-bottom: .3em;
+}
+
+h3 {
+	margin-top: 1.5em;
+}
+
+nav {
+	background: #f5f8fb;
+	padding: 15px;
+	border-left: 4px solid var(--primary);
+}
+
+nav ul {
+	margin: 0;
+	padding-left: 25px;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 1.5em 0;
+}
+
+th,
+td {
+	border: 1px solid #aaa;
+	padding: 10px;
+	text-align: left;
+	vertical-align: top;
+}
+
+th {
+	background: #eaf1f8;
+	color: #17365d;
+}
+
+.not,
+.uyari {
+	padding: 15px;
+	margin: 1.5em 0;
+	border-left: 5px solid;
+}
+
+.not {
+	background: var(--note-bg);
+	border-color: var(--note-border);
+}
+
+.uyari {
+	background: var(--warning-bg);
+	border-color: var(--warning-border);
+}
+
+kbd {
+	background: #f1f1f1;
+	border: 1px solid #999;
+	border-radius: 4px;
+	padding: 2px 6px;
+	font-family: monospace;
+	white-space: nowrap;
+}
+
+code {
+	background: #f1f1f1;
+	padding: 2px 5px;
+}
+
+a {
+	color: #0645ad;
+}
+
+footer {
+	margin-top: 3em;
+	padding-top: 1em;
+	border-top: 1px solid var(--border);
+}
+
+@media print {
+	body {
+		max-width: none;
+	}
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>My File Archive</h1>
+
+<p>
+<strong>Version:</strong> 26.8.1<br>
+<strong>Minimum supported NVDA version:</strong> 2026.1<br>
+<strong>Latest tested NVDA version:</strong> 2026.1.1<br>
+<strong>Developer:</strong> Mehmet Aykurt<br>
+<strong>Email:</strong>
+<a href="mailto:m.aykurt38@gmail.com">
+m.aykurt38@gmail.com
+</a><br>
+<strong>Website:</strong>
+<a href="https://mehmetaykurt.com.tr/">
+mehmetaykurt.com.tr
+</a><br>
+<strong>Server address:</strong>
+<a href="https://archive.org">
+archive.org
+</a>
+</p>
+
+<section aria-labelledby="diger-eklentiler">
+<h2 id="diger-eklentiler">Other add-ons by the developer</h2>
+
+<ul>
+<li><a href="https://github.com/MehmetAykurt/engelsiz-mail/releases/download/v1.7.0/Engelsiz-Mail-v1.7.0.nvda-addon">Download Engelsiz Mail</a></li>
+<li><a href="https://github.com/MehmetAykurt/engelsiz-nota/releases/download/v1.2.0/Engelsiz-Nota-v1.2.0.nvda-addon">Download Engelsiz Nota</a></li>
+<li><a href="https://github.com/MehmetAykurt/getem/releases/download/v1.2.1/Getem-E-Kutuphane-v1.2.1.nvda-addon">Download GETEM E-Kütüphane</a></li>
+<li><a href="https://github.com/MehmetAykurt/kurum-rehberi/releases/download/v1.2.0/Kurum-Rehberi-v1.2.0.nvda-addon">Download Kurum Rehberi</a></li>
+<li><a href="https://github.com/MehmetAykurt/suno/releases/download/v1.2.0/Suno-AI-Prompt-Olusturucu-v1.2.0.nvda-addon">Download Suno AI Prompt Oluşturucu</a></li>
+</ul>
+</section>
+
+<p>
+My File Archive is an add-on that helps NVDA users organise, upload, download and manage their files on the Internet Archive infrastructure through an accessible interface.
+</p>
+
+</header>
+
+
+<nav aria-label="Table of contents">
+
+<h2>Table of contents</h2>
+
+<ul>
+<li><a href="#hakkinda">1. About the add-on</a></li>
+<li><a href="#internet-archive">2. How the service works</a></li>
+<li><a href="#sinirlar">3. Storage, privacy and upload limits</a></li>
+<li><a href="#baslangic">4. Opening the add-on and account operations</a></li>
+<li><a href="#ana-pencere">5. Main window, menus and folder structure</a></li>
+<li><a href="#yukleme">6. Uploading files and the upload queue</a></li>
+<li><a href="#dosya-islemleri">7. File management</a></li>
+<li><a href="#ayarlar">8. Settings</a></li>
+<li><a href="#sorunlar">9. Troubleshooting</a></li>
+<li><a href="#yardim">10. Help and contact</a></li>
+</ul>
+
+</nav>
+
+
+<main>
+
+<h2 id="hakkinda">1. About the add-on</h2>
+
+<p>
+My File Archive is designed for NVDA users who wish to store their files in an organised manner online, download them when needed or share them through a direct link. The add-on aims to make archive management easier by making frequently used operations accessible from the keyboard.
+</p>
+
+<p>
+The add-on lets you connect to an account, navigate standard folders, upload and download files, copy links to the clipboard, view file information and delete files. Uploads are processed in order, so transfers are handled in a controlled manner when several files are selected.
+</p>
+
+<div class="not">
+<strong>Note:</strong> My File Archive is not developed or operated by Internet Archive. It is an independent NVDA add-on that uses the service's infrastructure.
+</div>
+
+<h2 id="internet-archive">2. How the service works</h2>
+
+<p>
+Files are stored in archive items on Internet Archive. After a file has been uploaded, the service may perform additional processing depending on the file type, size and system load. Consequently, a file may take some time to appear in lists or for derived formats to become available, even after its transfer has completed.
+</p>
+
+<p>
+The add-on uses standard folders to keep files organised. These folders are provided for easier navigation and management within the add-on; the technical structure of the archive is managed in the background by the add-on.
+</p>
+
+<div class="uyari">
+<strong>Important:</strong> Content stored on Internet Archive is subject to that service's terms of use and policies. Using this add-on does not remove the obligation to comply with the service's content and copyright rules.
+</div>
+
+<h2 id="sinirlar">3. Storage, privacy and upload limits</h2>
+
+<h3>3.1. File storage</h3>
+
+<p>
+My File Archive is intended to help you store files in the online archive service for the long term. However, no online storage service can guarantee that every uploaded file will be retained indefinitely.
+</p>
+
+<p>
+The service provider reserves the right to remove files that violate its terms of use, are removed at the request of copyright holders or are found to contain malicious software. It is therefore important to ensure that uploaded content complies with the service rules.
+</p>
+
+<div class="uyari">
+<strong>Important:</strong> Keep at least one additional copy of important files that could be lost, on your computer, an external storage device or another cloud service. Always consider the risk of data loss when a file exists only in the online archive.
+</div>
+
+<h3>3.2. Privacy and copyright</h3>
+
+<p>
+Do not upload credentials, passwords, personal documents, financial data, internal organisational documents or files that you do not want shared with third parties.
+</p>
+
+<p>
+Only upload files that belong to you, that you have the right to use or share, or for which you have obtained the necessary permission. Content that infringes copyright may be removed by the service provider, and repeated violations may result in action being taken against your account.
+</p>
+
+<h3>3.3. Upload limits</h3>
+
+<p>
+The service provider does not publish a fixed storage quota or total file-count limit for user accounts. Therefore, no specific storage capacity can be guaranteed through this add-on.
+</p>
+
+<p>
+According to the service's technical recommendations, files in a single archive item should not exceed approximately <strong>500&nbsp;GB</strong>. Although some documents mention a range of 500–700&nbsp;GB, using 500&nbsp;GB as the guide is advisable for greater stability.
+</p>
+
+<p>
+It is also recommended to keep an archive item below 10,000 files and 1&nbsp;TB of total data. These figures are technical recommendations for more efficient and stable operation, not fixed system limits.
+</p>
+
+<p>
+My File Archive uploads only one file at a time. When several files are selected, they are queued and uploaded one after another.
+</p>
+
+<p>
+The pending upload queue is retained when NVDA is closed. However, a file whose transfer was interrupted does not resume from where it stopped in the next session; its upload is restarted. For this reason, especially when uploading large files, use a stable internet connection and keep the computer on until the upload has finished.
+</p>
+<h2 id="baslangic">4. Opening the add-on and account operations</h2>
+
+<p>
+To use all features of My File Archive, you must sign in with a valid user account. Account creation and sign-in can be completed directly within the add-on.
+</p>
+
+<h3>4.1. Opening the main window</h3>
+
+<p>
+To open the add-on's main window, press <kbd>NVDA+Shift+A</kbd>.
+</p>
+
+<p>
+If no active session is available, the following message is displayed:
+</p>
+
+<blockquote>
+No active account was found. Would you like to sign in or create a new account?
+</blockquote>
+
+<ul>
+<li>The <strong>Yes</strong> option opens the sign-in window.</li>
+<li>The <strong>No</strong> option opens the main window. You can sign in later by using <strong>Account &gt; Connect</strong>.</li>
+</ul>
+
+<h3>4.2. Signing in to an existing account</h3>
+
+<ol>
+<li>In the main window, open <strong>Account &gt; Connect</strong>.</li>
+
+<li>Activate the <strong>Sign in</strong> button.
+Its keyboard shortcut is <kbd>Alt+G</kbd>.</li>
+
+<li>Enter your email address.</li>
+
+<li>Activate the <strong>Send sign-in code</strong> button.</li>
+
+<li>Wait for the verification code to be sent to your email address. During this process, only the <strong>Cancel</strong> button is available.</li>
+
+<li>Enter the six-digit verification code sent to your email address in the appropriate field.</li>
+
+<li>Activate the <strong>Verify</strong> button or press <kbd>Alt+D</kbd>.</li>
+</ol>
+
+<p>
+When verification is completed successfully, the add-on connects to your account and automatically refreshes the main list to display files in your archive.
+</p>
+
+<div class="not">
+<strong>Note:</strong> Verification codes can be used only once and expire after a set period for security reasons. If the code expires, you can request a new one.
+</div>
+
+<h3>4.3. Creating a new account</h3>
+
+<p>
+If you do not yet have an account, follow these steps to create one.
+</p>
+
+<ol>
+<li>In the Connect window, activate the <strong>Create a new account</strong> button.
+Its keyboard shortcut is <kbd>Alt+Y</kbd>.</li>
+
+<li>Enter your display name in the first field.</li>
+
+<li>Enter your email address.</li>
+
+<li>Activate the <strong>Send activation code</strong> button or press <kbd>Alt+G</kbd>.</li>
+
+<li>Enter the six-digit verification code sent to your email address in the appropriate field.</li>
+
+<li>Activate the <strong>Verify</strong> button to complete account creation.</li>
+</ol>
+
+<p>
+The display name must comply with the following rules:
+</p>
+
+<ul>
+<li>It must be between 3 and 40 characters long.</li>
+<li>Turkish characters must not be used.</li>
+<li>The first and final character must be an English letter or digit.</li>
+<li>English letters, digits, periods (<code>.</code>), underscores (<code>_</code>) and hyphens (<code>-</code>) may be used between them.</li>
+</ul>
+
+<p>
+The keyboard shortcut for the <strong>Cancel</strong> button in the Connect window is <kbd>Alt+P</kbd>.
+</p>
+
+<h3>4.4. Signing out</h3>
+
+<p>
+To sign out of the session stored on this computer, use <strong>Account &gt; Disconnect</strong>.
+</p>
+
+<p>
+This operation removes only the session information stored on the computer. Your user account, archive and uploaded files are not deleted. You can sign in again at any time with the same email address.
+</p>
+<h2 id="ana-pencere">5. Main window, menus and folder structure</h2>
+
+<p>
+The My File Archive main window is the primary workspace for viewing and managing files in the archive. In this window, you can navigate folders, perform operations on files and access add-on settings.
+</p>
+
+<h3>5.1. Folder structure</h3>
+
+<p>
+After the first successful sign-in, the add-on automatically creates standard folders for ease of use.
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Images</td>
+<td>Used to store photographs, drawings and other visual content.</td>
+</tr>
+
+<tr>
+<td>Audio and Music</td>
+<td>Used for sound recordings, music files and other audio content.</td>
+</tr>
+
+<tr>
+<td>Videos</td>
+<td>Used to store and organise video files.</td>
+</tr>
+
+<tr>
+<td>Documents</td>
+<td>Used for text documents, PDF files and similar documents.</td>
+</tr>
+
+<tr>
+<td>Applications</td>
+<td>Used for program files, installation packages and application content.</td>
+</tr>
+
+<tr>
+<td>Compressed Files</td>
+<td>Used for ZIP, RAR, 7Z and similar archive formats.</td>
+</tr>
+
+<tr>
+<td>Backups</td>
+<td>Used for files kept for backup purposes.</td>
+</tr>
+
+<tr>
+<td>Other</td>
+<td>Used for files that do not fit the other categories.</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+These folders are provided solely for organisation and ease of access. The underlying archive structure for files is managed automatically by the add-on.
+</p>
+
+<h3>5.2. Navigating the list</h3>
+
+<p>
+Use the following keys to move between items in the main window list:
+</p>
+
+<ul>
+<li><kbd>Up Arrow</kbd> and <kbd>Down Arrow</kbd> move between list items.</li>
+
+<li><kbd>Enter</kbd> opens the selected folder or activates the selected action row.</li>
+
+<li><kbd>Escape</kbd> returns to the previous level from the open folder.</li>
+</ul>
+
+<p>
+If a folder contains many files, its contents may be divided into pages. Use the <strong>Previous page</strong> and <strong>Next page</strong> options in the list to move between pages.
+</p>
+
+<h3>5.3. Viewing file details</h3>
+
+<p>
+When a file is selected, use <kbd>Right Arrow</kbd> and <kbd>Left Arrow</kbd> to move through its details.
+</p>
+
+<p>
+The following information can be displayed:
+</p>
+
+<ul>
+<li>File name</li>
+<li>File type</li>
+<li>File size</li>
+<li>Upload date</li>
+<li>Current file status</li>
+</ul>
+
+<p>
+When you move to another file, the detail cycle starts again with the file name.
+</p>
+
+<h3>5.4. Menu structure</h3>
+
+<table>
+<thead>
+<tr>
+<th>Menu</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Account</td>
+<td>Contains sign-in, disconnect and main-window commands.</td>
+</tr>
+
+<tr>
+<td>Settings</td>
+<td>Lets you manage notifications and file visibility options.</td>
+</tr>
+
+<tr>
+<td>Uploads</td>
+<td>Lets you control ongoing and pending upload operations.</td>
+</tr>
+
+<tr>
+<td>Help</td>
+<td>Provides access to the user guide and information about the add-on.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="yukleme">6. Uploading files and the upload queue</h2>
+
+<p>
+My File Archive uses an upload queue to transfer files to the archive in an orderly and controlled way. Selected files are queued and processed in the order determined by the add-on.
+</p>
+
+<h3>6.1. Uploading selected files</h3>
+
+<p>
+Follow these steps to upload one or more selected files:
+</p>
+
+<ol>
+<li>Open the folder where you want to upload the file.</li>
+
+<li>Open the context menu.</li>
+
+<li>Use <strong>Upload file</strong>.
+Its keyboard shortcut is <kbd>Alt+Y</kbd>.</li>
+
+<li>In the file selection dialog, choose the files you want to upload.</li>
+
+<li>Activate the <strong>Open</strong> button to confirm your selection.</li>
+</ol>
+
+<p>
+All common file types can be uploaded. You cannot upload a file directly while viewing the root folder; first open the target folder.
+</p>
+
+<h3>6.2. Uploading files from the clipboard</h3>
+
+<p>
+Files copied in Windows Explorer or a similar file manager can be added directly to the upload queue through the clipboard.
+</p>
+
+<ol>
+<li>Select the file or files to upload.</li>
+
+<li>Copy the files to the clipboard with <kbd>Ctrl+C</kbd>.</li>
+
+<li>In My File Archive, open the target folder.</li>
+
+<li>Press <kbd>Ctrl+V</kbd> to start the upload.</li>
+</ol>
+
+<p>
+If the clipboard contains valid files, new upload tasks are automatically created for the selected folder.
+</p>
+
+<h3>6.3. Upload queue and file statuses</h3>
+
+<p>
+When several files are selected, the add-on adds them to the upload queue and processes them in order. Information about pending tasks is retained when NVDA is closed.
+</p>
+
+<p>
+The current file status can be displayed in the list:
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Waiting to upload</td>
+<td>The file has been queued and is waiting to be transferred.</td>
+</tr>
+
+<tr>
+<td>Processing in archive</td>
+<td>The file is being transferred or processed by the service. Progress percentage is shown when available.</td>
+</tr>
+
+<tr>
+<td>Upload error</td>
+<td>The file transfer could not be completed and may need to be retried.</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Closing the main window does not stop ongoing uploads while NVDA continues to run. When NVDA is closed, pending upload records are retained and evaluated again at the next start.
+</p>
+
+<p>
+Interrupted uploads do not resume from where they stopped. The file transfer starts again. Therefore, use a stable internet connection when uploading large files.
+</p>
+
+<h3>6.4. Managing uploads</h3>
+
+<p>
+The <strong>Uploads</strong> menu lets you control ongoing and pending transfers.
+</p>
+
+<ul>
+<li>
+<strong>Pause uploads:</strong>
+Stops the current transfer and preserves the existing queue.
+</li>
+
+<li>
+<strong>Start uploads:</strong>
+Restarts a previously paused upload queue.
+</li>
+
+<li>
+<strong>Cancel uploads:</strong>
+Removes pending and ongoing upload tasks. Confirmation is requested before the operation.
+</li>
+
+<li>
+<strong>Retry failed uploads:</strong>
+Adds failed upload operations to the queue again.
+</li>
+</ul>
+
+<div class="uyari">
+<strong>Caution:</strong>
+When an upload is cancelled, the add-on may also request removal of the transferred file from the archive service. However, the file may remain in the archive if the connection is interrupted or the service reports an error. Check the relevant folder after cancelling.
+</div>
+<h2 id="dosya-islemleri">7. File management</h2>
+
+<p>
+My File Archive lets you perform various management operations on files in the archive. To access file operations, select the relevant file and open the context menu.
+</p>
+
+<p>
+Status rows and page-navigation options are not actual file items. File operations are unavailable on these rows.
+</p>
+
+<h3>7.1. Downloading files</h3>
+
+<p>
+Follow these steps to download a file from the archive to your computer:
+</p>
+
+<ol>
+<li>Select the file you want to download.</li>
+
+<li>
+Use <strong>Download</strong> from the context menu.
+Its keyboard shortcut is <kbd>Alt+I</kbd>.
+</li>
+
+<li>
+In the Save dialog, select the destination folder.
+</li>
+
+<li>
+Activate the <strong>Save</strong> button to start the download.
+</li>
+</ol>
+
+<p>
+While the download is in progress, only the <strong>Cancel</strong> option for stopping it is displayed. The add-on notifies you when the operation finishes successfully.
+</p>
+
+<h3>7.2. Copying a file link to the clipboard</h3>
+
+<p>
+<strong>Copy link to clipboard</strong> copies the selected file's direct access link to the Windows clipboard.
+</p>
+
+<p>
+The keyboard shortcut for this option is <kbd>Alt+B</kbd>.
+</p>
+
+<p>
+Anyone with the link may be able to access the file. Before sharing it, consider the file content and its access status.
+</p>
+
+<div class="uyari">
+<strong>Security warning:</strong>
+The direct-link feature makes files easy to share. However, remember that third parties may use the link. Use this feature with care for files containing confidential or personal information.
+</div>
+
+<h3>7.3. Viewing file information</h3>
+
+<p>
+<strong>File information</strong> displays detailed information about the selected file.
+</p>
+
+<p>
+Its keyboard shortcut is <kbd>Alt+D</kbd>.
+</p>
+
+<p>
+The information window may display:
+</p>
+
+<ul>
+<li>File name</li>
+<li>File type</li>
+<li>File size</li>
+<li>The file's direct access link</li>
+</ul>
+
+<p>
+The information can be copied to the clipboard using the relevant button in the same window.
+</p>
+
+<h3>7.4. Deleting files</h3>
+
+<p>
+To remove a file from the archive, select it and use <strong>Delete</strong> from the context menu.
+</p>
+
+<p>
+The keyboard shortcut for deletion is <kbd>Alt+S</kbd>.
+</p>
+
+<p>
+Confirmation is requested before deletion for security. Once confirmed, the operation cannot be undone.
+</p>
+
+<p>
+When the original file is deleted, removal of related derived files created by the service is also requested. This may take a short time for technical reasons.
+</p>
+
+<p>
+If a deleted file continues to appear in the list, refresh the folder view or restart the add-on and check again.
+</p>
+<h2 id="ayarlar">8. Settings</h2>
+
+<p>
+The way My File Archive operates can be changed according to your preferences through the <strong>Settings</strong> menu. Changes are saved automatically and remain in effect in later NVDA sessions.
+</p>
+
+<p>
+To change an option's state, press <kbd>Enter</kbd> while it is selected. Checked options are enabled; unchecked options are disabled.
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Show notifications</td>
+<td>
+Provides NVDA notifications about completed uploads while the main window is closed.
+</td>
+</tr>
+
+<tr>
+<td>Show derived files</td>
+<td>
+Shows in lists the additional files automatically created by the archive service from original files.
+</td>
+</tr>
+</tbody>
+</table>
+
+<h3>8.1. Visibility of derived files</h3>
+
+<p>
+For some file types, the archive service may automatically create additional files in different formats. For example, audio and video files may have files prepared for playback or conversion to other formats.
+</p>
+
+<p>
+If you do not want to see these files, disable <strong>Show derived files</strong>. For everyday use, displaying only the original files you uploaded provides a simpler list.
+</p>
+
+<h3>8.2. Using notifications</h3>
+
+<p>
+Because uploads can take a long time, you can use notifications to monitor their status while the main window is closed.
+</p>
+
+<p>
+When <strong>Show notifications</strong> is enabled, NVDA announces completed uploads through an accessible notification.
+</p>
+<h2 id="sorunlar">9. Important notes and troubleshooting</h2>
+
+<p>
+This section provides suggestions for resolving common issues that may arise while using My File Archive. If the issue continues, you can request support through the contact channels listed at the end of this section.
+</p>
+
+<h3>9.1. Verification code not received or unable to sign in</h3>
+
+<p>
+The verification code used to sign in to your account is sent by email. If the code does not arrive, check the following:
+</p>
+
+<ul>
+<li>Ensure that the email address is entered correctly.</li>
+
+<li>Check your junk, spam or similar folders.</li>
+
+<li>If you use an organisational network, firewall or proxy server, ensure that the connection is not blocked.</li>
+
+<li>If you requested too many codes in a short time, wait before requesting another code.</li>
+</ul>
+
+<p>
+To maintain a secure connection, do not disable certificate verification.
+</p>
+
+<h3>9.2. File upload does not complete</h3>
+
+<p>
+If an upload fails, check the following:
+</p>
+
+<ul>
+<li>Ensure that your internet connection is stable.</li>
+
+<li>Check that the file to be uploaded is still present on your computer.</li>
+
+<li>Use <strong>Uploads &gt; Retry failed uploads</strong>.</li>
+
+<li>Remember that the transfer restarts if the connection is interrupted for a large file.</li>
+</ul>
+
+<p>
+For more reliable results, particularly with very large files, keep file sizes and the number of files in a folder at reasonable levels.
+</p>
+
+<h3>9.3. Uploaded file does not appear in the list</h3>
+
+<p>
+If a file does not appear immediately after upload, one of the following may apply:
+</p>
+
+<ul>
+<li>The file may still be processed by the archive service.</li>
+
+<li>The list may not be up to date.</li>
+
+<li>Additional files created for the file type may still be being prepared.</li>
+</ul>
+
+<p>
+To resolve the issue, close and reopen the folder view, then check again after a short time.
+</p>
+
+<p>
+If you are looking for derived files, make sure that <strong>Settings &gt; Show derived files</strong> is enabled.
+</p>
+
+<h3>9.4. Deleted file still appears</h3>
+
+<p>
+If a file continues to appear in the list after deletion, the operation may not yet be complete on the archive service.
+</p>
+
+<p>
+In this case:
+</p>
+
+<ul>
+<li>Refresh the folder view.</li>
+
+<li>Restart the add-on.</li>
+
+<li>Wait briefly and check again.</li>
+</ul>
+
+<p>
+If the file continues to appear for a long time, the service-side operation may not be complete.
+</p>
+
+<h3>9.5. Considerations for large files</h3>
+
+<p>
+Connection quality and the computer's operating state are important when uploading large files. The following recommendations provide more reliable use:
+</p>
+
+<ul>
+<li>Use an uninterrupted internet connection where possible during upload.</li>
+
+<li>Prevent the computer from entering sleep mode.</li>
+
+<li>Consider splitting very large files into smaller parts when necessary.</li>
+
+<li>For long-running operations, do not close NVDA before the upload is complete.</li>
+</ul>
+<h2 id="yardim">10. Help and contact</h2>
+
+<p>
+You can access help options for My File Archive through the <strong>Help</strong> menu.
+</p>
+
+<h3>10.1. Accessing the user guide</h3>
+
+<p>
+<strong>Help &gt; User guide</strong> opens this document in your default web browser. The guide contains information about using the add-on and troubleshooting.
+</p>
+
+<h3>10.2. Viewing information about the add-on</h3>
+
+<p>
+<strong>Help &gt; About</strong> displays the add-on version, developer information and other identifying details.
+</p>
+
+<h3>10.3. Contact</h3>
+
+<p>
+For bug reports, development suggestions or feedback about the add-on, use the following contact address:
+</p>
+
+<p>
+<strong>Email:</strong>
+<a href="mailto:m.aykurt38@gmail.com">m.aykurt38@gmail.com</a>
+</p>
+
+<p>
+Including the following information when reporting an issue will help it be investigated more quickly:
+</p>
+
+<ul>
+<li>The NVDA version you use</li>
+<li>The My File Archive version</li>
+<li>A detailed description of the issue</li>
+<li>Any error messages</li>
+<li>Steps that reproduce the issue</li>
+</ul>
+
+<div class="not">
+<strong>Note:</strong>
+Do not send personal information, account information or files that you do not want shared for support purposes.
+</div>
+</main>
+
+<footer>
+
+<h2>Official service resources</h2>
+
+<p>
+Technical information, usage recommendations and service policies for the archive service used by My File Archive are available from the following official sources.
+</p>
+
+<ul>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360016700691-Uploading-Troubleshooting">
+Upload troubleshooting and technical limits
+</a>
+</li>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360016475032-Uploading-Tips">
+Upload recommendations
+</a>
+</li>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360014759692-Rights">
+Copyright and content-removal policies
+</a>
+</li>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360018403211-Files-Formats-and-Derivatives-Tips-Troubleshooting">
+Information about file formats and derived files
+</a>
+</li>
+
+</ul>
+
+<p>
+The service information in this guide is based on the official sources listed above. Service rules, technical limits and features may change over time.
+</p>
+
+<p>
+<strong>Document version:</strong> 26.8.1<br>
+<strong>Last updated:</strong> 31 July 2026
+</p>
+
+</footer>
+
+</body>
+</html>

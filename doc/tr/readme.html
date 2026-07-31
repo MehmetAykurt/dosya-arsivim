@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dosya Arşivim Kullanım Kılavuzu</title>
+
+<style>
+:root {
+	--primary: #17365d;
+	--secondary: #284f7c;
+	--border: #b8c9dc;
+	--text: #222;
+	--background: #ffffff;
+	--note-bg: #eef6ee;
+	--note-border: #357a38;
+	--warning-bg: #fff4df;
+	--warning-border: #b36b00;
+}
+
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	line-height: 1.7;
+	max-width: 1024px;
+	margin: 0 auto;
+	padding: 20px;
+	color: var(--text);
+	background: var(--background);
+}
+
+header {
+	border-bottom: 2px solid var(--primary);
+	padding-bottom: 1em;
+	margin-bottom: 2em;
+}
+
+h1,
+h2,
+h3 {
+	color: var(--primary);
+}
+
+h1 {
+	font-size: 2em;
+}
+
+h2 {
+	margin-top: 2em;
+	border-bottom: 1px solid var(--border);
+	padding-bottom: .3em;
+}
+
+h3 {
+	margin-top: 1.5em;
+}
+
+nav {
+	background: #f5f8fb;
+	padding: 15px;
+	border-left: 4px solid var(--primary);
+}
+
+nav ul {
+	margin: 0;
+	padding-left: 25px;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 1.5em 0;
+}
+
+th,
+td {
+	border: 1px solid #aaa;
+	padding: 10px;
+	text-align: left;
+	vertical-align: top;
+}
+
+th {
+	background: #eaf1f8;
+	color: #17365d;
+}
+
+.not,
+.uyari {
+	padding: 15px;
+	margin: 1.5em 0;
+	border-left: 5px solid;
+}
+
+.not {
+	background: var(--note-bg);
+	border-color: var(--note-border);
+}
+
+.uyari {
+	background: var(--warning-bg);
+	border-color: var(--warning-border);
+}
+
+kbd {
+	background: #f1f1f1;
+	border: 1px solid #999;
+	border-radius: 4px;
+	padding: 2px 6px;
+	font-family: monospace;
+	white-space: nowrap;
+}
+
+code {
+	background: #f1f1f1;
+	padding: 2px 5px;
+}
+
+a {
+	color: #0645ad;
+}
+
+footer {
+	margin-top: 3em;
+	padding-top: 1em;
+	border-top: 1px solid var(--border);
+}
+
+@media print {
+	body {
+		max-width: none;
+	}
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>Dosya Arşivim</h1>
+
+<p>
+<strong>Sürüm:</strong> 26.8.1<br>
+<strong>Desteklenen en düşük NVDA sürümü:</strong> 2026.1<br>
+<strong>Son test edilen NVDA sürümü:</strong> 2026.1.1<br>
+<strong>Geliştirici:</strong> Mehmet Aykurt<br>
+<strong>E-posta:</strong>
+<a href="mailto:m.aykurt38@gmail.com">
+m.aykurt38@gmail.com
+</a><br>
+<strong>Web sitesi:</strong>
+<a href="https://mehmetaykurt.com.tr/">
+mehmetaykurt.com.tr
+</a><br>
+<strong>Sunucu adresi:</strong>
+<a href="https://archive.org">
+archive.org
+</a>
+</p>
+
+<section aria-labelledby="diger-eklentiler">
+<h2 id="diger-eklentiler">Geliştiricinin diğer eklentileri</h2>
+
+<ul>
+<li><a href="https://github.com/MehmetAykurt/engelsiz-mail/releases/download/v1.7.0/Engelsiz-Mail-v1.7.0.nvda-addon">Engelsiz Mail eklentisini indir</a></li>
+<li><a href="https://github.com/MehmetAykurt/engelsiz-nota/releases/download/v1.2.0/Engelsiz-Nota-v1.2.0.nvda-addon">Engelsiz Nota eklentisini indir</a></li>
+<li><a href="https://github.com/MehmetAykurt/getem/releases/download/v1.2.1/Getem-E-Kutuphane-v1.2.1.nvda-addon">GETEM E-Kütüphane eklentisini indir</a></li>
+<li><a href="https://github.com/MehmetAykurt/kurum-rehberi/releases/download/v1.2.0/Kurum-Rehberi-v1.2.0.nvda-addon">Kurum Rehberi eklentisini indir</a></li>
+<li><a href="https://github.com/MehmetAykurt/suno/releases/download/v1.2.0/Suno-AI-Prompt-Olusturucu-v1.2.0.nvda-addon">Suno AI Prompt Oluşturucu eklentisini indir</a></li>
+</ul>
+</section>
+
+<p>
+Dosya Arşivim, NVDA kullanıcılarının Internet Archive altyapısındaki dosyalarını erişilebilir bir arayüz üzerinden düzenlemesine, yüklemesine, indirmesine ve yönetmesine yardımcı olan bir eklentidir.
+</p>
+
+</header>
+
+
+<nav aria-label="İçindekiler">
+
+<h2>İçindekiler</h2>
+
+<ul>
+<li><a href="#hakkinda">1. Eklenti hakkında</a></li>
+<li><a href="#internet-archive">2. Hizmetin çalışma yapısı</a></li>
+<li><a href="#sinirlar">3. Saklama, gizlilik ve yükleme sınırları</a></li>
+<li><a href="#baslangic">4. Eklentiyi açma ve hesap işlemleri</a></li>
+<li><a href="#ana-pencere">5. Ana pencere, menüler ve klasör yapısı</a></li>
+<li><a href="#yukleme">6. Dosya yükleme ve yükleme kuyruğu</a></li>
+<li><a href="#dosya-islemleri">7. Dosya yönetimi</a></li>
+<li><a href="#ayarlar">8. Ayarlar</a></li>
+<li><a href="#sorunlar">9. Sorun giderme</a></li>
+<li><a href="#yardim">10. Yardım ve iletişim</a></li>
+</ul>
+
+</nav>
+
+
+<main>
+
+<h2 id="hakkinda">1. Eklenti hakkında</h2>
+
+<p>
+Dosya Arşivim; dosyalarını çevrim içi ortamda düzenli biçimde saklamak, gerektiğinde indirmek veya doğrudan bağlantı yoluyla paylaşmak isteyen NVDA kullanıcıları için hazırlanmıştır. Eklenti, sık kullanılan işlemleri klavyeyle erişilebilir hâle getirerek arşiv yönetimini kolaylaştırmayı amaçlar.
+</p>
+
+<p>
+Eklenti; hesapla bağlantı kurma, standart klasörlerde gezinme, dosya yükleme, indirme, bağlantıyı panoya kopyalama, dosya bilgilerini görüntüleme ve silme işlevlerini sunar. Yüklemeler sıra düzeninde yürütülür; böylece birden fazla dosya seçildiğinde aktarım işlemleri denetimli biçimde gerçekleştirilir.
+</p>
+
+<div class="not">
+<strong>Not:</strong> Dosya Arşivim, Internet Archive tarafından geliştirilen ya da işletilen bir uygulama değildir. Eklenti, ilgili hizmetin altyapısından yararlanan bağımsız bir NVDA eklentisidir.
+</div>
+
+<h2 id="internet-archive">2. Hizmetin çalışma yapısı</h2>
+
+<p>
+Dosyalar, Internet Archive üzerindeki arşiv ögeleri içinde saklanır. Bir dosyanın yüklenmesinden sonra hizmet; dosyanın türüne, boyutuna ve sistem yoğunluğuna bağlı olarak ek işlem yapabilir. Bu nedenle dosya aktarımı tamamlanmış olsa bile dosyanın listelerde görünmesi veya türetilmiş biçimlerinin hazırlanması zaman alabilir.
+</p>
+
+<p>
+Eklenti, dosyaların düzenli görüntülenebilmesi için standart klasörler kullanır. Bu klasörler, eklenti içindeki gezinti ve yönetim kolaylığı içindir; arşivleme altyapısının teknik yapısı eklenti tarafından arka planda yönetilir.
+</p>
+
+<div class="uyari">
+<strong>Önemli:</strong> Internet Archive'da tutulan içerikler, hizmetin kendi kullanım koşullarına ve politikalarına tabidir. Eklentinin kullanılması, hizmetin içerik ve telif hakkı kurallarını ortadan kaldırmaz.
+</div>
+
+<h2 id="sinirlar">3. Saklama, gizlilik ve yükleme sınırları</h2>
+
+<h3>3.1. Dosyaların saklanması</h3>
+
+<p>
+Dosya Arşivim, dosyalarınızı çevrim içi arşiv hizmetinde uzun süreli olarak saklamanızı amaçlar. Bununla birlikte, hiçbir çevrim içi depolama hizmeti yüklenen tüm dosyaların süresiz olarak korunacağını garanti edemez.
+</p>
+
+<p>
+Hizmet sağlayıcısı; kullanım koşullarını ihlal eden, telif hakkı sahiplerinin talebi üzerine kaldırılan veya zararlı yazılım içerdiği tespit edilen dosyaları kaldırma hakkını saklı tutar. Bu nedenle yüklediğiniz içeriklerin hizmet kurallarına uygun olması önemlidir.
+</p>
+
+<div class="uyari">
+<strong>Önemli:</strong> Kaybetme riski bulunan önemli dosyalarınızın bilgisayarınızda, harici bir depolama aygıtında veya farklı bir bulut hizmetinde en az bir ek kopyasını bulundurmanız önerilir. Tek kopyası çevrim içi arşivde bulunan dosyalar için veri kaybı riski her zaman göz önünde bulundurulmalıdır.
+</div>
+
+<h3>3.2. Gizlilik ve telif hakları</h3>
+
+<p>
+Kimlik bilgileri, parolalar, kişisel belgeler, finansal veriler, kurum içi belgeler veya üçüncü kişilerle paylaşılmasını istemediğiniz dosyalar bu hizmete yüklenmemelidir.
+</p>
+
+<p>
+Yalnızca size ait olan, kullanım veya paylaşım hakkına sahip bulunduğunuz ya da gerekli izinleri aldığınız dosyaları yükleyiniz. Telif hakkını ihlal eden içerikler hizmet sağlayıcısı tarafından kaldırılabilir ve tekrarlayan ihlaller hesabınız hakkında idari işlem uygulanmasına neden olabilir.
+</p>
+
+<h3>3.3. Yükleme sınırları</h3>
+
+<p>
+Hizmet sağlayıcısı, kullanıcı hesapları için kesin bir depolama kotası veya toplam dosya sayısı sınırı yayımlamamaktadır. Bu nedenle eklenti aracılığıyla belirli bir depolama kapasitesi taahhüt edilemez.
+</p>
+
+<p>
+Hizmetin yayımladığı teknik önerilere göre, tek bir arşiv ögesindeki dosyaların yaklaşık <strong>500&nbsp;GB</strong> değerini aşmaması tavsiye edilmektedir. Bazı belgelerde 500–700&nbsp;GB aralığından söz edilse de daha kararlı bir kullanım için 500&nbsp;GB düzeyinin esas alınması uygundur.
+</p>
+
+<p>
+Ayrıca bir arşiv ögesinde 10.000'den az dosya ile toplam 1&nbsp;TB'ın altında veri hedeflenmesi önerilir. Bu değerler kesin sistem sınırları değil, hizmetin daha verimli ve kararlı çalışmasına yönelik teknik tavsiyelerdir.
+</p>
+
+<p>
+Dosya Arşivim aynı anda yalnızca bir dosya yükler. Birden fazla dosya seçildiğinde bunlar sıraya alınır ve yükleme işlemleri ardışık olarak gerçekleştirilir.
+</p>
+
+<p>
+NVDA kapatılırken bekleyen yükleme kuyruğu korunur. Ancak aktarımı yarıda kalan bir dosya, sonraki oturumda kaldığı yerden devam ettirilmez; yükleme işlemi yeniden başlatılır. Bu nedenle özellikle büyük dosyalar yüklenirken kesintisiz bir internet bağlantısı kullanılması ve yükleme tamamlanıncaya kadar bilgisayarın açık bırakılması tavsiye edilir.
+</p>
+<h2 id="baslangic">4. Eklentiyi açma ve hesap işlemleri</h2>
+
+<p>
+Dosya Arşivim'in tüm özelliklerinden yararlanabilmek için geçerli bir kullanıcı hesabıyla oturum açmanız gerekir. Hesap oluşturma ve oturum açma işlemleri doğrudan eklenti içerisinden gerçekleştirilebilir.
+</p>
+
+<h3>4.1. Ana pencerenin açılması</h3>
+
+<p>
+Eklentinin ana penceresini açmak için <kbd>NVDA+Shift+A</kbd> tuşlarına basın.
+</p>
+
+<p>
+Etkin bir oturum bulunmuyorsa aşağıdaki ileti görüntülenir:
+</p>
+
+<blockquote>
+Etkin bir hesap bulunamadı. Giriş yapmak veya yeni bir hesap oluşturmak ister misiniz?
+</blockquote>
+
+<ul>
+<li><strong>Evet</strong> seçeneği oturum açma penceresini açar.</li>
+<li><strong>Hayır</strong> seçeneği ana pencereyi açar. Daha sonra <strong>Hesap &gt; Bağlan</strong> menüsünü kullanarak oturum açabilirsiniz.</li>
+</ul>
+
+<h3>4.2. Mevcut bir hesaba giriş yapma</h3>
+
+<ol>
+<li>Ana pencerede <strong>Hesap &gt; Bağlan</strong> menüsünü açın.</li>
+
+<li><strong>Giriş yap</strong> düğmesini etkinleştirin.
+Klavye kısayolu <kbd>Alt+G</kbd>'dir.</li>
+
+<li>E-posta adresinizi girin.</li>
+
+<li><strong>Giriş kodu gönder</strong> düğmesini etkinleştirin.</li>
+
+<li>Doğrulama kodu e-posta adresinize gönderilinceye kadar bekleyin. Bu işlem sırasında yalnızca <strong>İptal</strong> düğmesi kullanılabilir.</li>
+
+<li>E-posta adresinize gönderilen altı haneli doğrulama kodunu ilgili alana yazın.</li>
+
+<li><strong>Doğrula</strong> düğmesini etkinleştirin veya <kbd>Alt+D</kbd> tuşlarına basın.</li>
+</ol>
+
+<p>
+Doğrulama işlemi başarıyla tamamlandığında eklenti hesabınıza bağlanır ve ana liste otomatik olarak güncellenerek arşivinizde bulunan dosyalar görüntülenir.
+</p>
+
+<div class="not">
+<strong>Not:</strong> Doğrulama kodları tek kullanımlıktır ve güvenlik amacıyla belirli bir süre sonunda geçerliliğini kaybeder. Kodun süresi dolarsa yeni bir doğrulama kodu talep edebilirsiniz.
+</div>
+
+<h3>4.3. Yeni bir hesap oluşturma</h3>
+
+<p>
+Henüz hesabınız yoksa aşağıdaki adımları izleyerek yeni bir kullanıcı hesabı oluşturabilirsiniz.
+</p>
+
+<ol>
+<li>Bağlan penceresinde bulunan <strong>Yeni hesap oluştur</strong> düğmesini etkinleştirin.
+Klavye kısayolu <kbd>Alt+Y</kbd>'dir.</li>
+
+<li>İlk alana görünen adınızı yazın.</li>
+
+<li>E-posta adresinizi girin.</li>
+
+<li><strong>Aktivasyon kodu gönder</strong> düğmesini etkinleştirin veya <kbd>Alt+G</kbd> tuşlarına basın.</li>
+
+<li>E-posta adresinize gönderilen altı haneli doğrulama kodunu ilgili alana yazın.</li>
+
+<li><strong>Doğrula</strong> düğmesini etkinleştirerek hesap oluşturma işlemini tamamlayın.</li>
+</ol>
+
+<p>
+Görünen ad aşağıdaki kurallara uygun olmalıdır:
+</p>
+
+<ul>
+<li>En az 3, en fazla 40 karakter uzunluğunda olmalıdır.</li>
+<li>Türkçe karakter kullanılmamalıdır.</li>
+<li>Adın ilk ve son karakteri İngilizce harf veya rakam olmalıdır.</li>
+<li>Ara karakter olarak İngilizce harfler, rakamlar, nokta (<code>.</code>), alt çizgi (<code>_</code>) ve kısa çizgi (<code>-</code>) kullanılabilir.</li>
+</ul>
+
+<p>
+Bağlan penceresindeki <strong>İptal</strong> düğmesinin klavye kısayolu <kbd>Alt+P</kbd>'dir.
+</p>
+
+<h3>4.4. Oturumun sonlandırılması</h3>
+
+<p>
+Bu bilgisayarda kayıtlı oturumu sonlandırmak için <strong>Hesap &gt; Bağlantıyı kes</strong> komutunu kullanın.
+</p>
+
+<p>
+Bu işlem yalnızca bilgisayarda saklanan oturum bilgilerini kaldırır. Kullanıcı hesabınız, arşiviniz ve yüklediğiniz dosyalar silinmez. Aynı e-posta adresiyle dilediğiniz zaman yeniden oturum açabilirsiniz.
+</p>
+<h2 id="ana-pencere">5. Ana pencere, menüler ve klasör yapısı</h2>
+
+<p>
+Dosya Arşivim ana penceresi, arşivde bulunan dosyaların görüntülenmesi ve yönetilmesi için kullanılan temel çalışma alanıdır. Pencere içerisinde klasörler arasında gezinebilir, dosyalar üzerinde işlem gerçekleştirebilir ve eklenti ayarlarına erişebilirsiniz.
+</p>
+
+<h3>5.1. Klasör yapısı</h3>
+
+<p>
+İlk başarılı oturum açma işleminden sonra eklenti, kullanım kolaylığı sağlamak amacıyla standart klasörleri otomatik olarak oluşturur.
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Klasör</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resimler</td>
+<td>Fotoğraf, çizim ve diğer görsel içeriklerin saklanması için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Ses ve Müzik</td>
+<td>Ses kayıtları, müzik dosyaları ve diğer ses içerikleri için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Videolar</td>
+<td>Video dosyalarının saklanması ve düzenlenmesi için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Belgeler</td>
+<td>Metin belgeleri, PDF dosyaları ve benzeri belgeler için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Uygulamalar</td>
+<td>Program dosyaları, kurulum paketleri ve uygulama içerikleri için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Sıkıştırılmış Dosyalar</td>
+<td>ZIP, RAR, 7Z ve benzeri arşiv biçimindeki dosyalar için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Yedekler</td>
+<td>Yedekleme amacıyla saklanan dosyalar için kullanılır.</td>
+</tr>
+
+<tr>
+<td>Diğer</td>
+<td>Diğer kategorilere uygun olmayan dosyalar için kullanılır.</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Bu klasörler yalnızca düzenleme ve erişim kolaylığı sağlamak amacıyla sunulur. Dosyaların arka plandaki arşivleme yapısı eklenti tarafından otomatik olarak yönetilir.
+</p>
+
+<h3>5.2. Liste içinde gezinme</h3>
+
+<p>
+Ana penceredeki listede bulunan öğeler arasında aşağıdaki tuşlarla hareket edebilirsiniz:
+</p>
+
+<ul>
+<li><kbd>Yukarı Ok</kbd> ve <kbd>Aşağı Ok</kbd> tuşları, liste öğeleri arasında gezinmeyi sağlar.</li>
+
+<li><kbd>Enter</kbd> tuşu, seçili klasörü açar veya seçili işlem satırını çalıştırır.</li>
+
+<li><kbd>Escape</kbd> tuşu, açık olan klasörden önceki seviyeye dönmeyi sağlar.</li>
+</ul>
+
+<p>
+Bir klasörde çok sayıda dosya bulunuyorsa içerik sayfalara ayrılabilir. Bu durumda listede bulunan <strong>Önceki sayfa</strong> ve <strong>Sonraki sayfa</strong> seçenekleri kullanılarak sayfalar arasında geçiş yapılabilir.
+</p>
+
+<h3>5.3. Dosya bilgilerini görüntüleme</h3>
+
+<p>
+Bir dosya seçiliyken <kbd>Sağ Ok</kbd> ve <kbd>Sol Ok</kbd> tuşları kullanılarak dosyaya ait ayrıntılar arasında geçiş yapılabilir.
+</p>
+
+<p>
+Görüntülenebilen bilgiler şunlardır:
+</p>
+
+<ul>
+<li>Dosya adı</li>
+<li>Dosya türü</li>
+<li>Dosya boyutu</li>
+<li>Yüklenme tarihi</li>
+<li>Dosyanın mevcut durumu</li>
+</ul>
+
+<p>
+Başka bir dosyaya geçildiğinde bilgi dolaşımı yeniden dosya adı bilgisinden başlar.
+</p>
+
+<h3>5.4. Menü yapısı</h3>
+
+<table>
+<thead>
+<tr>
+<th>Menü</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Hesap</td>
+<td>Oturum açma, bağlantıyı sonlandırma ve ana pencere işlemlerini içerir.</td>
+</tr>
+
+<tr>
+<td>Ayarlar</td>
+<td>Bildirimler ve dosya görünürlüğü seçeneklerinin yönetilmesini sağlar.</td>
+</tr>
+
+<tr>
+<td>Yüklemeler</td>
+<td>Devam eden veya bekleyen yükleme işlemlerinin kontrol edilmesini sağlar.</td>
+</tr>
+
+<tr>
+<td>Yardım</td>
+<td>Kullanım kılavuzuna ve eklenti hakkında bilgilerine erişim sağlar.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="yukleme">6. Dosya yükleme ve yükleme kuyruğu</h2>
+
+<p>
+Dosya Arşivim, dosyaların arşive düzenli ve kontrollü biçimde aktarılmasını sağlamak amacıyla bir yükleme kuyruğu sistemi kullanır. Seçilen dosyalar sıraya alınır ve eklenti tarafından belirlenen sıraya göre işlenir.
+</p>
+
+<h3>6.1. Dosya seçerek yükleme</h3>
+
+<p>
+Bir veya daha fazla dosyayı seçerek yüklemek için aşağıdaki adımları uygulayın:
+</p>
+
+<ol>
+<li>Dosyanın yüklenmesini istediğiniz klasöre girin.</li>
+
+<li>İçerik menüsünü açın.</li>
+
+<li><strong>Dosya yükle</strong> seçeneğini kullanın.
+Klavye kısayolu <kbd>Alt+Y</kbd>'dir.</li>
+
+<li>Açılan dosya seçim penceresinden yüklemek istediğiniz dosyaları belirleyin.</li>
+
+<li><strong>Aç</strong> düğmesini etkinleştirerek seçimi tamamlayın.</li>
+</ol>
+
+<p>
+Tüm yaygın dosya türleri yükleme işleminde kullanılabilir. Ana klasör görünümündeyken doğrudan dosya yükleme yapılamaz; öncelikle hedef klasörün açılması gerekir.
+</p>
+
+<h3>6.2. Panodan dosya yükleme</h3>
+
+<p>
+Windows Gezgini veya benzeri bir dosya yöneticisi üzerinden kopyalanan dosyalar, pano aracılığıyla doğrudan yükleme kuyruğuna eklenebilir.
+</p>
+
+<ol>
+<li>Yüklenecek dosya veya dosyaları seçin.</li>
+
+<li><kbd>Ctrl+C</kbd> tuşlarıyla dosyaları panoya kopyalayın.</li>
+
+<li>Dosya Arşivim içinde hedef klasöre geçin.</li>
+
+<li><kbd>Ctrl+V</kbd> tuşlarına basarak yükleme işlemini başlatın.</li>
+</ol>
+
+<p>
+Panoda geçerli dosyalar bulunuyorsa seçilen klasör için otomatik olarak yeni yükleme görevleri oluşturulur.
+</p>
+
+<h3>6.3. Yükleme kuyruğu ve dosya durumları</h3>
+
+<p>
+Birden fazla dosya seçildiğinde eklenti, dosyaları yükleme kuyruğuna ekler ve işlemleri sırayla gerçekleştirir. Bekleyen görevlerin bilgisi NVDA kapatıldığında korunur.
+</p>
+
+<p>
+Dosyaların mevcut durumu liste içerisinde görüntülenebilir:
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Durum</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Yükleme bekliyor</td>
+<td>Dosya sıraya alınmış, aktarım için beklemektedir.</td>
+</tr>
+
+<tr>
+<td>Arşivde işleniyor</td>
+<td>Dosya aktarılıyor veya hizmet tarafından işlenmektedir. Kullanılabilir olduğunda ilerleme yüzdesi de gösterilir.</td>
+</tr>
+
+<tr>
+<td>Yükleme hatası</td>
+<td>Dosya aktarımı tamamlanamamıştır ve yeniden denenmesi gerekebilir.</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Ana pencerenin kapatılması, NVDA çalışmaya devam ettiği sürece devam eden yükleme işlemlerini durdurmaz. NVDA kapatıldığında bekleyen yükleme kayıtları korunur ve sonraki açılışta yeniden değerlendirilir.
+</p>
+
+<p>
+Yarım kalan yüklemeler kaldığı noktadan devam ettirilmez. Dosyanın aktarımı yeniden başlatılır. Bu nedenle büyük dosyaların yüklenmesi sırasında kararlı bir internet bağlantısı kullanılması önerilir.
+</p>
+
+<h3>6.4. Yükleme işlemlerinin yönetilmesi</h3>
+
+<p>
+<strong>Yüklemeler</strong> menüsü, devam eden ve bekleyen aktarım işlemlerinin kontrol edilmesini sağlar.
+</p>
+
+<ul>
+<li>
+<strong>Yüklemeleri duraklat:</strong>
+Devam eden aktarımı durdurur ve mevcut kuyruğu korur.
+</li>
+
+<li>
+<strong>Yüklemeleri başlat:</strong>
+Daha önce duraklatılmış yükleme kuyruğunu yeniden çalıştırır.
+</li>
+
+<li>
+<strong>Yüklemeleri iptal et:</strong>
+Bekleyen ve devam eden yükleme görevlerini kaldırır. İşlem öncesinde kullanıcı onayı istenir.
+</li>
+
+<li>
+<strong>Hatalı yüklemeleri yeniden dene:</strong>
+Başarısız olan yükleme işlemlerini tekrar kuyruğa ekler.
+</li>
+</ul>
+
+<div class="uyari">
+<strong>Dikkat:</strong>
+Bir yükleme iptal edildiğinde eklenti, arşiv hizmetine aktarılmış olan dosyanın da kaldırılması için işlem başlatabilir. Ancak bağlantı kesilmesi veya hizmet kaynaklı bir hata oluşması durumunda dosyanın arşivde kalma ihtimali vardır. İptal işleminden sonra ilgili klasörün kontrol edilmesi önerilir.
+</div>
+<h2 id="dosya-islemleri">7. Dosya yönetimi</h2>
+
+<p>
+Dosya Arşivim, arşivde bulunan dosyalar üzerinde çeşitli yönetim işlemleri gerçekleştirmenize olanak tanır. Dosya işlemlerine erişmek için ilgili dosyayı seçtikten sonra içerik menüsünü açın.
+</p>
+
+<p>
+Yükleme durumu bildiren satırlar veya sayfa geçiş seçenekleri gerçek dosya öğeleri değildir. Bu satırlarda dosya işlemleri kullanılamaz.
+</p>
+
+<h3>7.1. Dosya indirme</h3>
+
+<p>
+Arşivde bulunan bir dosyayı bilgisayarınıza indirmek için aşağıdaki adımları izleyin:
+</p>
+
+<ol>
+<li>İndirmek istediğiniz dosyayı seçin.</li>
+
+<li>
+İçerik menüsünden <strong>İndir</strong> seçeneğini kullanın.
+Klavye kısayolu <kbd>Alt+İ</kbd>'dir.
+</li>
+
+<li>
+Açılan kaydetme penceresinde hedef klasörü belirleyin.
+</li>
+
+<li>
+<strong>Kaydet</strong> düğmesini etkinleştirerek indirme işlemini başlatın.
+</li>
+</ol>
+
+<p>
+İndirme işlemi devam ederken yalnızca işlemi durdurmaya yarayan <strong>İptal</strong> seçeneği görüntülenir. İşlem başarıyla tamamlandığında eklenti kullanıcıyı bilgilendirir.
+</p>
+
+<h3>7.2. Dosya bağlantısını panoya kopyalama</h3>
+
+<p>
+<strong>Bağlantıyı panoya kopyala</strong> seçeneği, seçili dosyanın doğrudan erişim bağlantısını Windows panosuna aktarır.
+</p>
+
+<p>
+Bu seçeneğin klavye kısayolu <kbd>Alt+B</kbd>'dir.
+</p>
+
+<p>
+Bağlantıya sahip kişiler dosyaya erişebileceğinden, bağlantıyı paylaşmadan önce dosyanın içeriğini ve erişim durumunu değerlendirmeniz önerilir.
+</p>
+
+<div class="uyari">
+<strong>Güvenlik uyarısı:</strong>
+Doğrudan bağlantı özelliği, dosyaların kolay paylaşılmasını sağlar. Ancak bağlantının üçüncü kişiler tarafından kullanılabileceğini unutmayın. Gizli veya kişisel bilgiler içeren dosyalar için bu özellik dikkatli kullanılmalıdır.
+</div>
+
+<h3>7.3. Dosya bilgilerini görüntüleme</h3>
+
+<p>
+<strong>Dosya bilgileri</strong> seçeneği, seçili dosyaya ait ayrıntılı bilgilerin görüntülenmesini sağlar.
+</p>
+
+<p>
+Klavye kısayolu <kbd>Alt+D</kbd>'dir.
+</p>
+
+<p>
+Bilgi penceresinde aşağıdaki bilgiler görüntülenebilir:
+</p>
+
+<ul>
+<li>Dosya adı</li>
+<li>Dosya türü</li>
+<li>Dosya boyutu</li>
+<li>Dosyanın doğrudan erişim bağlantısı</li>
+</ul>
+
+<p>
+Bilgiler, aynı pencere içerisinde bulunan ilgili düğme kullanılarak panoya kopyalanabilir.
+</p>
+
+<h3>7.4. Dosya silme</h3>
+
+<p>
+Bir dosyayı arşivden kaldırmak için ilgili dosyayı seçin ve içerik menüsündeki <strong>Sil</strong> komutunu kullanın.
+</p>
+
+<p>
+Silme işleminin klavye kısayolu <kbd>Alt+S</kbd>'dir.
+</p>
+
+<p>
+Güvenlik amacıyla silme işleminden önce kullanıcı onayı istenir. Onay verildikten sonra işlem geri alınamaz.
+</p>
+
+<p>
+Özgün dosyanın silinmesiyle birlikte, hizmet tarafından oluşturulmuş ilişkili türetilmiş dosyaların da kaldırılması için işlem başlatılır. Bu işlemin tamamlanması teknik nedenlerle kısa bir süre alabilir.
+</p>
+
+<p>
+Silinen bir dosya listede görünmeye devam ederse klasör görünümünü yenileyin ya da eklentiyi yeniden başlattıktan sonra durumu tekrar kontrol edin.
+</p>
+<h2 id="ayarlar">8. Ayarlar</h2>
+
+<p>
+Dosya Arşivim'in çalışma biçimi, <strong>Ayarlar</strong> menüsü üzerinden kullanıcı tercihleri doğrultusunda değiştirilebilir. Yapılan değişiklikler otomatik olarak kaydedilir ve sonraki NVDA oturumlarında da geçerli olur.
+</p>
+
+<p>
+Bir seçeneğin durumunu değiştirmek için ilgili seçeneğin üzerinde <kbd>Enter</kbd> tuşuna basın. İşaretli seçenekler etkin, işareti kaldırılmış seçenekler devre dışı durumdadır.
+</p>
+
+<table>
+<thead>
+<tr>
+<th>Ayar</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Bildirimleri göster</td>
+<td>
+Ana pencere kapalıyken tamamlanan yükleme işlemleri hakkında NVDA aracılığıyla bildirim alınmasını sağlar.
+</td>
+</tr>
+
+<tr>
+<td>Türetilmiş dosyaları göster</td>
+<td>
+Arşiv hizmeti tarafından özgün dosyalardan otomatik olarak oluşturulan ek dosyaların listelerde görüntülenmesini sağlar.
+</td>
+</tr>
+</tbody>
+</table>
+
+<h3>8.1. Türetilmiş dosyaların görünürlüğü</h3>
+
+<p>
+Bazı dosya türleri için arşiv hizmeti tarafından otomatik olarak farklı biçimlerde ek dosyalar oluşturulabilir. Örneğin ses ve video dosyalarında oynatma veya farklı biçimlere dönüştürme amacıyla hazırlanan dosyalar bulunabilir.
+</p>
+
+<p>
+Bu dosyaları görmek istemiyorsanız <strong>Türetilmiş dosyaları göster</strong> seçeneğini devre dışı bırakabilirsiniz. Günlük kullanımda yalnızca yüklediğiniz özgün dosyaların görüntülenmesi daha sade bir liste sağlar.
+</p>
+
+<h3>8.2. Bildirimlerin kullanımı</h3>
+
+<p>
+Yükleme işlemleri uzun sürebileceğinden, ana pencere kapalıyken işlemlerin durumunu takip etmek için bildirim özelliği kullanılabilir.
+</p>
+
+<p>
+<strong>Bildirimleri göster</strong> seçeneği etkin olduğunda, tamamlanan yükleme işlemleri NVDA tarafından okunabilir bir bildirim aracılığıyla duyurulur.
+</p>
+<h2 id="sorunlar">9. Bilinmesi gerekenler ve sorun giderme</h2>
+
+<p>
+Bu bölüm, Dosya Arşivim kullanılırken karşılaşılabilecek yaygın sorunlara yönelik çözüm önerileri içerir. Sorun devam ederse bölüm sonunda belirtilen iletişim kanallarını kullanarak destek talebinde bulunabilirsiniz.
+</p>
+
+<h3>9.1. Doğrulama kodu ulaşmıyor veya oturum açılamıyor</h3>
+
+<p>
+Hesabınıza giriş yapmak için kullanılan doğrulama kodu e-posta yoluyla gönderilir. Kodun ulaşmaması durumunda aşağıdaki kontrolleri gerçekleştirin:
+</p>
+
+<ul>
+<li>E-posta adresinin doğru yazıldığından emin olun.</li>
+
+<li>Gereksiz e-posta, spam veya benzeri klasörleri kontrol edin.</li>
+
+<li>Kurum ağı, güvenlik duvarı veya vekil sunucu kullanılıyorsa bağlantının engellenmediğinden emin olun.</li>
+
+<li>Kısa süre içerisinde çok fazla kod talep ettiyseniz yeni bir kod istemeden önce bir süre bekleyin.</li>
+</ul>
+
+<p>
+Güvenli bağlantının korunması amacıyla sertifika doğrulamasını devre dışı bırakmanız önerilmez.
+</p>
+
+<h3>9.2. Dosya yükleme işlemi tamamlanmıyor</h3>
+
+<p>
+Yükleme işlemi başarısız oluyorsa aşağıdaki noktaları kontrol edin:
+</p>
+
+<ul>
+<li>İnternet bağlantınızın kararlı olduğundan emin olun.</li>
+
+<li>Yüklenmek istenen dosyanın bilgisayarınızda hâlâ mevcut olduğunu kontrol edin.</li>
+
+<li><strong>Yüklemeler &gt; Hatalı yüklemeleri yeniden dene</strong> seçeneğini kullanın.</li>
+
+<li>Büyük dosyalarda bağlantı kesilmesi durumunda aktarımın yeniden başlayacağını unutmayın.</li>
+</ul>
+
+<p>
+Özellikle çok büyük dosyalarda daha kararlı sonuç almak için dosya boyutlarını ve aynı klasörde bulunan dosya sayısını makul seviyelerde tutmanız önerilir.
+</p>
+
+<h3>9.3. Yüklenen dosya listede görünmüyor</h3>
+
+<p>
+Bir dosya yükleme işleminden sonra hemen görüntülenmiyorsa aşağıdaki durumlar söz konusu olabilir:
+</p>
+
+<ul>
+<li>Dosya hâlen arşiv hizmeti tarafından işleniyor olabilir.</li>
+
+<li>Liste güncel olmayabilir.</li>
+
+<li>Dosya türüne bağlı olarak oluşturulan ek dosyalar henüz hazırlanıyor olabilir.</li>
+</ul>
+
+<p>
+Sorunu gidermek için klasör görünümünü kapatıp yeniden açın ve kısa bir süre sonra tekrar kontrol edin.
+</p>
+
+<p>
+Türetilmiş dosyaları arıyorsanız <strong>Ayarlar &gt; Türetilmiş dosyaları göster</strong> seçeneğinin etkin olduğundan emin olun.
+</p>
+
+<h3>9.4. Silinen dosya hâlâ görünüyor</h3>
+
+<p>
+Silme işlemi sonrasında dosyanın listede görünmeye devam etmesi, arşiv hizmetindeki işlemin henüz tamamlanmamış olmasından kaynaklanabilir.
+</p>
+
+<p>
+Bu durumda:
+</p>
+
+<ul>
+<li>Klasör görünümünü yenileyin.</li>
+
+<li>Eklentiyi yeniden başlatın.</li>
+
+<li>Kısa bir süre bekledikten sonra tekrar kontrol edin.</li>
+</ul>
+
+<p>
+Dosya uzun süre görünmeye devam ederse hizmet tarafındaki işlem tamamlanmamış olabilir.
+</p>
+
+<h3>9.5. Büyük dosyalarda dikkat edilmesi gerekenler</h3>
+
+<p>
+Büyük dosyaların yüklenmesi sırasında bağlantı kalitesi ve bilgisayarın çalışma durumu önemlidir. Aşağıdaki öneriler daha kararlı bir kullanım sağlar:
+</p>
+
+<ul>
+<li>Yükleme sırasında mümkün olduğunca kesintisiz internet bağlantısı kullanın.</li>
+
+<li>Bilgisayarın uyku moduna geçmesini engelleyin.</li>
+
+<li>Çok büyük dosyaları gerektiğinde daha küçük parçalara ayırmayı değerlendirin.</li>
+
+<li>Uzun süren işlemlerde yükleme tamamlanmadan NVDA'yı kapatmayın.</li>
+</ul>
+<h2 id="yardim">10. Yardım ve iletişim</h2>
+
+<p>
+Dosya Arşivim ile ilgili yardım seçeneklerine <strong>Yardım</strong> menüsü üzerinden erişebilirsiniz.
+</p>
+
+<h3>10.1. Kullanım kılavuzuna erişim</h3>
+
+<p>
+<strong>Yardım &gt; Kullanım kılavuzu</strong> seçeneği, bu belgeyi varsayılan internet tarayıcınızda açar. Kılavuzda eklentinin kullanımı ile sorun giderme bilgilerine ulaşabilirsiniz.
+</p>
+
+<h3>10.2. Eklenti hakkında bilgileri görüntüleme</h3>
+
+<p>
+<strong>Yardım &gt; Hakkında</strong> seçeneği; eklenti sürümü, geliştirici bilgileri ve diğer tanımlayıcı bilgileri görüntüler.
+</p>
+
+<h3>10.3. İletişim</h3>
+
+<p>
+Eklentiyle ilgili hata bildirimleri, geliştirme önerileri veya geri bildirimler için aşağıdaki iletişim adresini kullanabilirsiniz:
+</p>
+
+<p>
+<strong>E-posta:</strong>
+<a href="mailto:m.aykurt38@gmail.com">m.aykurt38@gmail.com</a>
+</p>
+
+<p>
+Bir sorun bildirirken aşağıdaki bilgileri eklemeniz, sorunun daha hızlı incelenmesine yardımcı olur:
+</p>
+
+<ul>
+<li>Kullandığınız NVDA sürümü</li>
+<li>Dosya Arşivim sürümü</li>
+<li>Karşılaşılan sorunun ayrıntılı açıklaması</li>
+<li>Varsa hata iletileri</li>
+<li>Sorunun oluştuğu adımlar</li>
+</ul>
+
+<div class="not">
+<strong>Not:</strong>
+Kişisel bilgilerinizi, hesap bilgilerinizi veya paylaşılmasını istemediğiniz dosyaları destek amacıyla göndermeyin.
+</div>
+</main>
+
+<footer>
+
+<h2>Resmî hizmet kaynakları</h2>
+
+<p>
+Dosya Arşivim'in kullandığı arşiv hizmetiyle ilgili teknik bilgiler,
+kullanım önerileri ve hizmet politikaları aşağıdaki resmî kaynaklarda
+yer almaktadır.
+</p>
+
+<ul>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360016700691-Uploading-Troubleshooting">
+Yükleme sorun giderme ve teknik sınırlar
+</a>
+</li>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360016475032-Uploading-Tips">
+Yükleme önerileri
+</a>
+</li>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360014759692-Rights">
+Telif hakları ve içerik kaldırma ilkeleri
+</a>
+</li>
+
+<li>
+<a href="https://archivesupport.zendesk.com/hc/en-us/articles/360018403211-Files-Formats-and-Derivatives-Tips-Troubleshooting">
+Dosya biçimleri ve türetilmiş dosyalar hakkında bilgiler
+</a>
+</li>
+
+</ul>
+
+<p>
+Bu kılavuzda yer alan hizmet bilgileri, belirtilen resmî kaynaklar temel
+alınarak hazırlanmıştır. Hizmet kuralları, teknik sınırlar ve özellikler
+zaman içerisinde değişebilir.
+</p>
+
+<p>
+<strong>Belge sürümü:</strong> 26.8.1<br>
+<strong>Son düzenleme:</strong> 31 Temmuz 2026
+</p>
+
+</footer>
+
+</body>
+</html>
