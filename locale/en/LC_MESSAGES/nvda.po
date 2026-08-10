@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Dosya Arsivim 26.8.1\n"
+"Project-Id-Version: Dosya Arsivim 26.8.2\n"
 "PO-Revision-Date: 2026-07-31 00:00+0300\n"
 "Last-Translator: Mehmet Aykurt\n"
 "Language-Team: English\n"

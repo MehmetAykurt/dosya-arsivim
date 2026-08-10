@@ -213,7 +213,7 @@ class HesapIstemi:
 		govde = None
 		basliklar = {
 			"Accept": "application/json",
-			"User-Agent": "DosyaArsivimNVDA/26.8.1",
+			"User-Agent": "DosyaArsivimNVDA/26.8.2",
 		}
 		if veri is not None:
 			govde = json.dumps(veri).encode("utf-8")
