@@ -1,6 +1,6 @@
 {
-  "surum": "26.8.2",
-  "link": "https://github.com/MehmetAykurt/dosya-arsivim/releases/download/v26.8.2/dosya-arsivim-v26.8.2.nvda-addon",
-  "sha256": "b6752708ca991f5ac42d653b73d3d8783bd86d0e8993fdcf1b87924419875a46",
-  "aciklama": "Sınırsız alan, sınırsız dosya...\nDijital çevrim içi dosya depolama arşivi olan İnternet Archive sistemiyle entegre çalışan bu eklenti, NVDA kullanıcılarının tüm dosyalarını düzenli biçimde saklamasını, dilediğinde indirmesini veya paylaşım bağlantısı oluşturmasını sağlar. Sık kullanılan tüm işlemleri klavye kısayollarıyla erişilebilir kılarak arşiv yönetimini kolaylaştırır.\n(NVDA+Shift+A)"
+  "surum": "26.8.12",
+  "link": "https://github.com/MehmetAykurt/dosya-arsivim/releases/download/v26.8.12/dosya-arsivim-v26.8.12.nvda-addon",
+  "sha256": "3ccbaa643dcf040a1b3ba046ebefe5b17acf091e2503c4919915bfcc257c07be",
+  "aciklama": "Açılış kısayol hatası giderilmiştir."
 }
