@@ -61,7 +61,7 @@ class HesapDurumu:
 HESAP_DURUMU = HesapDurumu()
 AYARLAR = Ayarlar()
 BAGLANTI_BILDIRIM_GECIKMESI_MS = 150
-EKLENTI_SURUMU = "26.8.2"
+EKLENTI_SURUMU = "26.8.12"
 
 
 def arka_planda(calistir, tamamla):

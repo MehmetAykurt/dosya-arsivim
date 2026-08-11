@@ -69,5 +69,5 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		self.pencere = None
 
 	__gestures = {
-		"kb:nvda+shift+a": "dosya_arsivim_ac",
+		"kb:nvda+alt+a": "dosya_arsivim_ac",
 	}

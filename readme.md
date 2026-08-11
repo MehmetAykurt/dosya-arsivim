@@ -6,7 +6,7 @@ Eklenti, hesap işlemlerini e-posta ile gönderilen tek kullanımlık kodla yür
 
 ## Sürüm bilgileri
 
-- **Sürüm:** 26.8.2
+- **Sürüm:** 26.8.12
 - **En düşük NVDA sürümü:** 2026.1
 - **Son test edilen NVDA sürümü:** 2026.1.1
 - **Geliştirici:** Mehmet Aykurt
@@ -14,7 +14,7 @@ Eklenti, hesap işlemlerini e-posta ile gönderilen tek kullanımlık kodla yür
 
 ## Öne çıkan özellikler
 
-- `NVDA+Shift+A` ile Dosya Arşivim penceresini açma
+- `NVDA+Alt+A` ile Dosya Arşivim penceresini açma
 - E-posta ile tek kullanımlık kod göndererek giriş yapma veya yeni hesap oluşturma
 - Hesap bilgisini yalnızca bu bilgisayardan kaldırma ve gerektiğinde yeniden bağlanma
 - Resimler, Ses ve Müzik, Videolar, Belgeler, Uygulamalar, Sıkıştırılmış Dosyalar, Yedekler ve Diğer klasörleri
