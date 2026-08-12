@@ -1,6 +1,6 @@
 {
-  "surum": "26.8.12",
-  "link": "https://github.com/MehmetAykurt/dosya-arsivim/releases/download/v26.8.12/dosya-arsivim-v26.8.12.nvda-addon",
-  "sha256": "3ccbaa643dcf040a1b3ba046ebefe5b17acf091e2503c4919915bfcc257c07be",
-  "aciklama": "Açılış kısayol hatası giderilmiştir."
+  "surum": "26.8.13",
+  "link": "https://github.com/MehmetAykurt/dosya-arsivim/releases/download/v26.8.13/dosya-arsivim-v26.8.13.nvda-addon",
+  "sha256": "a39eb73f52a020ff3f4912f53309134e338bd05a06302547d26a995519ba67e0",
+  "aciklama": "Python 3.13 ve SQLite uyumluluğu iyileştirildi."
 }
