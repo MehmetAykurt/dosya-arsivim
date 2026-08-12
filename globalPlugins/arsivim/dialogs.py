@@ -2,7 +2,6 @@
 """Dosya Arşivim için erişilebilir wxPython pencereleri."""
 
 import re
-import sqlite3
 import threading
 import weakref
 import os
@@ -20,6 +19,7 @@ from speech.commands import CallbackCommand
 
 from .account_api import HesapHatasi, HesapIstemi, YuklemeDuraklatildi
 from .ayarlar import Ayarlar
+from .sqlite_compat import sqlite3
 from .yukleme_kuyrugu import YuklemeKuyrugu
 
 try:
@@ -61,7 +61,7 @@ class HesapDurumu:
 HESAP_DURUMU = HesapDurumu()
 AYARLAR = Ayarlar()
 BAGLANTI_BILDIRIM_GECIKMESI_MS = 150
-EKLENTI_SURUMU = "26.8.12"
+EKLENTI_SURUMU = "26.8.13"
 
 
 def arka_planda(calistir, tamamla):

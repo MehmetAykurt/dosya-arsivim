@@ -4,24 +4,15 @@
 import addonHandler
 addonHandler.initTranslation()
 
-import os
-import sys
-
-VENDOR_DIZINI = os.path.join(os.path.dirname(__file__), "vendor")
-if VENDOR_DIZINI not in sys.path:
-	sys.path.insert(0, VENDOR_DIZINI)
-if hasattr(os, "add_dll_directory"):
-	VENDOR_DLL_DIZINI = os.add_dll_directory(VENDOR_DIZINI)
-
 import globalPluginHandler
 import gui
 import logHandler
-import sqlite3
 import ui
 import wx
 
 from .dialogs import DosyaArsivimPenceresi, YUKLEME_YONETICISI
 from .onbellek import DosyaOnbellegi
+from .sqlite_compat import sqlite3
 
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):

@@ -3,20 +3,12 @@
 
 import hashlib
 import os
-import sys
 import time
 from contextlib import contextmanager
 
 import globalVars
 
-
-VENDOR_DIZINI = os.path.join(os.path.dirname(__file__), "vendor")
-if VENDOR_DIZINI not in sys.path:
-	sys.path.insert(0, VENDOR_DIZINI)
-if hasattr(os, "add_dll_directory"):
-	VENDOR_DLL_DIZINI = os.add_dll_directory(VENDOR_DIZINI)
-
-import sqlite3
+from .sqlite_compat import sqlite3
 
 
 class DosyaOnbellegi:
