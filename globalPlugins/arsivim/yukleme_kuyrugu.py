@@ -81,12 +81,15 @@ class YuklemeKuyrugu:
 	def siradakini_al(self, eposta):
 		with self.kilit:
 			for kayit in self.kayitlar:
-				if kayit["eposta"] == eposta and kayit["durum"] == "arşivleniyor":
-					return dict(kayit)
-			for kayit in self.kayitlar:
 				if kayit["eposta"] == eposta and kayit["durum"] == "bekliyor":
 					kayit["durum"] = "yükleniyor"
 					self._kaydet()
+					return dict(kayit)
+			for kayit in self.kayitlar:
+				if kayit["eposta"] == eposta and kayit["durum"] in ("iptal_ediliyor", "iptal_dogrulaniyor"):
+					return dict(kayit)
+			for kayit in self.kayitlar:
+				if kayit["eposta"] == eposta and kayit["durum"] == "arşivleniyor":
 					return dict(kayit)
 		return None
 
@@ -109,6 +112,15 @@ class YuklemeKuyrugu:
 	def tamamlandi(self, kayit_id):
 		with self.kilit:
 			self.kayitlar = [kayit for kayit in self.kayitlar if kayit["id"] != kayit_id]
+			self._kaydet()
+
+	def iptal_dogrulaniyor(self, kayit_id):
+		"""Sunucu silme isteği kabul edilen kaydı doğrulama aşamasına geçirir."""
+		with self.kilit:
+			for kayit in self.kayitlar:
+				if kayit["id"] == kayit_id:
+					kayit["durum"] = "iptal_dogrulaniyor"
+					break
 			self._kaydet()
 
 	def hatali(self, kayit_id, hata):
@@ -144,13 +156,25 @@ class YuklemeKuyrugu:
 					break
 			self._kaydet()
 
-	def epostadakileri_sil(self, eposta):
-		"""Belirli hesaba ait kuyruk kayıtlarını siler ve silinenleri döndürür."""
+	def epostadakileri_iptal_et(self, eposta):
+		"""Bekleyenleri kaldırır; sunucuya ulaşanları kalıcı iptal durumunda tutar."""
 		with self.kilit:
-			silinenler = [dict(kayit) for kayit in self.kayitlar if kayit["eposta"] == eposta]
-			self.kayitlar = [kayit for kayit in self.kayitlar if kayit["eposta"] != eposta]
+			iptal_edilenler = [dict(kayit) for kayit in self.kayitlar if kayit["eposta"] == eposta]
+			korunanlar = []
+			for kayit in self.kayitlar:
+				if kayit["eposta"] != eposta:
+					korunanlar.append(kayit)
+					continue
+				if kayit["durum"] in ("yükleniyor", "arşivleniyor"):
+					kayit["durum"] = "iptal_ediliyor"
+					kayit.pop("hata", None)
+					kayit.pop("yuzde", None)
+					korunanlar.append(kayit)
+				elif kayit["durum"] in ("iptal_ediliyor", "iptal_dogrulaniyor"):
+					korunanlar.append(kayit)
+			self.kayitlar = korunanlar
 			self._kaydet()
-		return silinenler
+		return iptal_edilenler
 
 	def epostadaki_sayi(self, eposta):
 		with self.kilit:

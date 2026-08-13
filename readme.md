@@ -6,7 +6,7 @@ Eklenti, hesap işlemlerini e-posta ile gönderilen tek kullanımlık kodla yür
 
 ## Sürüm bilgileri
 
-- **Sürüm:** 26.8.13
+- **Sürüm:** 26.8.14
 - **En düşük NVDA sürümü:** 2026.1
 - **Son test edilen NVDA sürümü:** 2026.1.1
 - **Geliştirici:** Mehmet Aykurt

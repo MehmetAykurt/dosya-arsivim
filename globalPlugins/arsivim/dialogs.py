@@ -61,7 +61,7 @@ class HesapDurumu:
 HESAP_DURUMU = HesapDurumu()
 AYARLAR = Ayarlar()
 BAGLANTI_BILDIRIM_GECIKMESI_MS = 150
-EKLENTI_SURUMU = "26.8.13"
+EKLENTI_SURUMU = "26.8.14"
 
 
 def arka_planda(calistir, tamamla):
@@ -113,6 +113,7 @@ class YuklemeYoneticisi:
 		self.iptal_edilen_kayitlar = set()
 		self.bildirilen_arsiv_islemleri = set()
 		self.son_yuzdeler = {}
+		self.uyandirma_olayi = threading.Event()
 
 	def dinleyici_ekle(self, dinleyici):
 		self.dinleyiciler.add(dinleyici)
@@ -122,6 +123,7 @@ class YuklemeYoneticisi:
 
 	def ekle(self, eposta, klasor, yerel_yollar):
 		self.depo.ekle(eposta, klasor, yerel_yollar)
+		self.uyandirma_olayi.set()
 		self.baslat()
 
 	def baslat(self):
@@ -129,7 +131,9 @@ class YuklemeYoneticisi:
 			if self.durduruldu or self.duraklatildi or not HESAP_DURUMU.bagli_mi:
 				return
 			if self.parcacik and self.parcacik.is_alive():
+				self.uyandirma_olayi.set()
 				return
+			self.uyandirma_olayi.clear()
 			self.parcacik = threading.Thread(target=self._calistir, daemon=True)
 			self.parcacik.start()
 
@@ -161,15 +165,23 @@ class YuklemeYoneticisi:
 		wx.CallAfter(self._duraklatma_durumu_bildir)
 
 	def yuklemeleri_iptal_et(self, eposta):
-		"""Hesaba ait bekleyen ve etkin yükleme kayıtlarını yerelden kaldırır."""
+		"""Bekleyenleri kaldırır; sunucuya ulaşanları doğrulanana kadar korur."""
 		with self.kilit:
-			silinenler = self.depo.epostadakileri_sil(eposta)
-			silinen_kayit_idleri = {kayit["id"] for kayit in silinenler}
-			if self.aktif_kayit_id in silinen_kayit_idleri and self.aktif_durdurma_olayi:
+			iptal_edilenler = self.depo.epostadakileri_iptal_et(eposta)
+			iptal_edilen_kayit_idleri = {kayit["id"] for kayit in iptal_edilenler}
+			uzaktan_kaldirilacak_sayi = sum(
+				kayit["durum"] in ("yükleniyor", "arşivleniyor", "iptal_ediliyor", "iptal_dogrulaniyor")
+				for kayit in iptal_edilenler
+			)
+			if self.aktif_kayit_id in iptal_edilen_kayit_idleri and self.aktif_durdurma_olayi:
 				self.iptal_edilen_kayitlar.add(self.aktif_kayit_id)
 				self.aktif_durdurma_olayi.set()
+			if uzaktan_kaldirilacak_sayi:
+				self.duraklatildi = False
+			self.uyandirma_olayi.set()
+		self.baslat()
 		wx.CallAfter(self._duraklatma_durumu_bildir)
-		return len(silinenler)
+		return len(iptal_edilenler), uzaktan_kaldirilacak_sayi
 
 	def hatali_yuklemeleri_yeniden_dene(self, eposta):
 		"""Hatalı yükleme kayıtlarını yeniden kuyruğa alır."""
@@ -201,16 +213,66 @@ class YuklemeYoneticisi:
 		while not self.durduruldu and not self.duraklatildi and HESAP_DURUMU.bagli_mi:
 			eposta = HESAP_DURUMU.eposta
 			istem = HESAP_DURUMU.istem
+			self.uyandirma_olayi.clear()
 			kayit = self.depo.siradakini_al(eposta)
 			if not kayit:
+				with self.kilit:
+					if self.uyandirma_olayi.is_set():
+						continue
+					self.parcacik = None
 				return
+			if kayit["durum"] in ("iptal_ediliyor", "iptal_dogrulaniyor"):
+				with self.kilit:
+					self.aktif_kayit_id = kayit["id"]
+					self.aktif_durdurma_olayi = threading.Event()
+				dosya_adi = os.path.basename(kayit["yerel_yol"])
+				if kayit["durum"] == "iptal_ediliyor":
+					try:
+						istem.dosya_sil(eposta, kayit["klasor"], dosya_adi)
+					except HesapHatasi as hata:
+						try:
+							gorunuyor_mu = istem.dosya_arsivde_mi(eposta, kayit["klasor"], dosya_adi)
+						except HesapHatasi:
+							gorunuyor_mu = None
+						if gorunuyor_mu is None:
+							self.aktif_durdurma_olayi.wait(5)
+						elif gorunuyor_mu:
+							self.depo.tamamlandi(kayit["id"])
+							wx.CallAfter(self._iptal_hatasi_bildir, kayit, str(hata))
+						else:
+							self.depo.tamamlandi(kayit["id"])
+							wx.CallAfter(self._iptal_tamamlandi_bildir, kayit)
+						self._aktif_kaydi_temizle(kayit["id"])
+						continue
+					except Exception:
+						logHandler.log.exception("İptal edilen yükleme sunucudan kaldırılırken beklenmeyen hata oluştu.")
+						self.aktif_durdurma_olayi.wait(5)
+						self._aktif_kaydi_temizle(kayit["id"])
+						continue
+					self.depo.iptal_dogrulaniyor(kayit["id"])
+					kayit["durum"] = "iptal_dogrulaniyor"
+					wx.CallAfter(self._durum_bildir, kayit)
+				try:
+					gorunuyor_mu = istem.dosya_arsivde_mi(eposta, kayit["klasor"], dosya_adi)
+				except HesapHatasi:
+					gorunuyor_mu = True
+				if not gorunuyor_mu:
+					self.depo.tamamlandi(kayit["id"])
+					wx.CallAfter(self._iptal_tamamlandi_bildir, kayit)
+				elif not self.aktif_durdurma_olayi.wait(5):
+					pass
+				self._aktif_kaydi_temizle(kayit["id"])
+				continue
 			if kayit["durum"] == "arşivleniyor":
 				with self.kilit:
 					self.aktif_kayit_id = kayit["id"]
 					self.aktif_durdurma_olayi = threading.Event()
 				if kayit["id"] not in self.bildirilen_arsiv_islemleri:
 					self.bildirilen_arsiv_islemleri.add(kayit["id"])
-					wx.CallAfter(ui.message, _("Arşivde işleniyor: {dosya}").format(dosya=os.path.basename(kayit["yerel_yol"])))
+					wx.CallAfter(
+						self._durum_mesaji_bildir,
+						_("Yükleme tamamlandı. Dosyanız arşivde işlenirken çalışmalarınıza devam edebilirsiniz."),
+					)
 					wx.CallAfter(self._durum_bildir, kayit)
 				try:
 					gorunuyor_mu = not self.aktif_durdurma_olayi.is_set() and HESAP_DURUMU.istem.dosya_arsivde_mi(
@@ -219,10 +281,7 @@ class YuklemeYoneticisi:
 				except HesapHatasi:
 					gorunuyor_mu = False
 				if kayit["id"] in self.iptal_edilen_kayitlar:
-					try:
-						istem.dosya_sil(eposta, kayit["klasor"], os.path.basename(kayit["yerel_yol"]))
-					except Exception:
-						logHandler.log.exception("İptal edilen arşiv dosyası sunucudan silinemedi.")
+					pass
 				elif gorunuyor_mu:
 					self.depo.tamamlandi(kayit["id"])
 					self.bildirilen_arsiv_islemleri.discard(kayit["id"])
@@ -232,7 +291,10 @@ class YuklemeYoneticisi:
 				self._aktif_kaydi_temizle(kayit["id"])
 				self.iptal_edilen_kayitlar.discard(kayit["id"])
 				continue
-			wx.CallAfter(ui.message, _("Dosya yükleniyor: {dosya}").format(dosya=os.path.basename(kayit["yerel_yol"])))
+			wx.CallAfter(
+				self._durum_mesaji_bildir,
+				_("Dosya yükleniyor: {dosya}").format(dosya=os.path.basename(kayit["yerel_yol"])),
+			)
 			durdurma_olayi = threading.Event()
 			with self.kilit:
 				self.aktif_kayit_id = kayit["id"]
@@ -280,10 +342,6 @@ class YuklemeYoneticisi:
 				continue
 			iptal_edildi = kayit["id"] in self.iptal_edilen_kayitlar
 			if iptal_edildi:
-				try:
-					istem.dosya_sil(eposta, kayit["klasor"], os.path.basename(kayit["yerel_yol"]))
-				except Exception:
-					logHandler.log.exception("İptal edilen yükleme sunucudan silinemedi.")
 				self._aktif_kaydi_temizle(kayit["id"])
 				self.iptal_edilen_kayitlar.discard(kayit["id"])
 				continue
@@ -306,6 +364,11 @@ class YuklemeYoneticisi:
 		for dinleyici in list(self.dinleyiciler):
 			dinleyici.yukleme_durumu_degisti(None)
 
+	def _durum_mesaji_bildir(self, mesaj):
+		"""Pencere açıkken veya bildirimler etkinse yükleme durumunu duyurur."""
+		if self.dinleyiciler or AYARLAR.bildirimleri_goster:
+			ui.message(mesaj)
+
 	def _ilerlemeyi_bildir(self, kayit, gonderilen, toplam):
 		if not toplam:
 			return
@@ -318,7 +381,7 @@ class YuklemeYoneticisi:
 		kayit["yuzde"] = yuzde
 		wx.CallAfter(self._durum_bildir, kayit)
 		wx.CallAfter(
-			ui.message,
+			self._durum_mesaji_bildir,
 			_("Dosya yükleniyor: {dosya}, yüzde {oran}").format(
 				dosya=os.path.basename(kayit["yerel_yol"]), oran=yuzde
 			),
@@ -340,6 +403,16 @@ class YuklemeYoneticisi:
 		wx.MessageBox(hata, _("Dosya yükle"), wx.OK | wx.ICON_ERROR)
 		for dinleyici in list(self.dinleyiciler):
 			dinleyici.yukleme_hatali(kayit, hata)
+
+	def _iptal_tamamlandi_bildir(self, kayit):
+		for dinleyici in list(self.dinleyiciler):
+			dinleyici.yukleme_iptali_tamamlandi(kayit)
+
+	def _iptal_hatasi_bildir(self, kayit, hata):
+		dosya_adi = os.path.basename(kayit["yerel_yol"])
+		ui.message(_("{dosya} yüklemesi iptal edilemedi. Dosya sunucuda bırakıldı.").format(dosya=dosya_adi))
+		for dinleyici in list(self.dinleyiciler):
+			dinleyici.yukleme_iptali_hatali(kayit, hata)
 
 
 YUKLEME_YONETICISI = YuklemeYoneticisi()
@@ -382,6 +455,7 @@ class DosyaArsivimPenceresi(wx.Frame):
 		self.sonraki_sayfa_ogesi = None
 		self.esitleme_devam_ediyor = False
 		self.esitleme_hata_gosterilsin = False
+		self.dogrulanan_silmeler = set()
 		self.kapatildi = False
 		YUKLEME_YONETICISI.dinleyici_ekle(self)
 		self._menu_olustur()
@@ -491,7 +565,11 @@ class DosyaArsivimPenceresi(wx.Frame):
 		)
 		if onay != wx.YES:
 			return
-		YUKLEME_YONETICISI.yuklemeleri_iptal_et(HESAP_DURUMU.eposta)
+		_, uzaktan_kaldirilacak_sayi = YUKLEME_YONETICISI.yuklemeleri_iptal_et(HESAP_DURUMU.eposta)
+		if uzaktan_kaldirilacak_sayi == 1:
+			ui.message(_("Dosyanız sunucudan kaldırılıyor. Bu sırada çalışmalarınıza devam edebilirsiniz."))
+		elif uzaktan_kaldirilacak_sayi > 1:
+			ui.message(_("Dosyalarınız sunucudan kaldırılıyor. Bu sırada çalışmalarınıza devam edebilirsiniz."))
 		self.arayuzu_yenile()
 
 	def hatali_yuklemeleri_yeniden_dene_secildi(self, event):
@@ -545,7 +623,7 @@ class DosyaArsivimPenceresi(wx.Frame):
 		event.Skip()
 
 	def liste_tusuna_basildi(self, event):
-		"""Enter ile klasöre girer, Escape ile ana dizine döner."""
+		"""Liste klavye komutlarını işler."""
 		if wx.Window.FindFocus() is not self.dosya_listesi:
 			event.Skip()
 			return
@@ -563,6 +641,9 @@ class DosyaArsivimPenceresi(wx.Frame):
 			return
 		if event.ControlDown() and tus in (ord("V"), ord("v")):
 			self.panodan_dosya_yukle()
+			return
+		if event.AltDown() and tus in (ord("S"), ord("s")):
+			self.dosya_sil_secildi(None)
 			return
 		if tus in (wx.WXK_LEFT, wx.WXK_RIGHT):
 			self.dosya_ayrintisini_seslendir(tus == wx.WXK_RIGHT)
@@ -842,8 +923,9 @@ class DosyaArsivimPenceresi(wx.Frame):
 			except (OSError, sqlite3.Error):
 				self.onbellek = None
 			else:
-				dosyalar = self.klasor_dosyalari.get(klasor, [])
-				self.klasor_dosyalari[klasor] = [dosya for dosya in dosyalar if dosya["ad"] != dosya_adi]
+				self.klasor_dosyalari[klasor] = self.onbellek.klasordeki_dosyalari_al(
+					eposta, klasor, AYARLAR.turetilmis_dosyalari_goster
+				)
 				self.arayuzu_yenile()
 				self.dosya_listesi.SetFocus()
 		arka_planda(
@@ -852,25 +934,69 @@ class DosyaArsivimPenceresi(wx.Frame):
 		)
 
 	def _dosya_silindi(self, eposta, islem_id, klasor, dosya_adi, hata):
-		if self.onbellek and islem_id is not None:
-			try:
-				if hata:
+		if hata:
+			if self.onbellek and islem_id is not None:
+				try:
 					self.onbellek.silme_hatali(eposta, islem_id, klasor, dosya_adi, hata)
 					self.klasor_dosyalari[klasor] = self.onbellek.klasordeki_dosyalari_al(
 						eposta, klasor, AYARLAR.turetilmis_dosyalari_goster
 					)
-				else:
-					self.onbellek.silme_tamamlandi(eposta, islem_id, klasor, dosya_adi)
-			except (OSError, sqlite3.Error):
-				self.onbellek = None
-		if self.kapatildi:
-			return
-		if hata:
+				except (OSError, sqlite3.Error):
+					self.onbellek = None
+			if self.kapatildi:
+				return
 			if self.aktif_klasor == klasor:
 				self.arayuzu_yenile()
 				self.dosya_listesi.SetFocus()
 			wx.MessageBox(hata, _("Dosyayı sil"), wx.OK | wx.ICON_ERROR, self)
 			return
+		if self.onbellek and islem_id is not None:
+			try:
+				self.onbellek.silme_dogrulaniyor(islem_id)
+			except (OSError, sqlite3.Error):
+				self.onbellek = None
+		if self.onbellek and islem_id is not None:
+			self._silme_dogrulamasini_baslat(eposta, islem_id, klasor, dosya_adi)
+			return
+		if self.kapatildi:
+			return
+		dosyalar = self.klasor_dosyalari.get(klasor, [])
+		self.klasor_dosyalari[klasor] = [dosya for dosya in dosyalar if dosya["ad"] != dosya_adi]
+		if self.aktif_klasor == klasor:
+			self.arayuzu_yenile()
+			self.dosya_listesi.SetFocus()
+
+	def _silme_dogrulamasini_baslat(self, eposta, islem_id, klasor, dosya_adi):
+		"""IA silmeyi gerçekten yansıtana kadar yerel silme kaydını korur."""
+		if self.kapatildi or islem_id in self.dogrulanan_silmeler:
+			return
+		self.dogrulanan_silmeler.add(islem_id)
+		arka_planda(
+			lambda: not HESAP_DURUMU.istem.dosya_arsivde_mi(eposta, klasor, dosya_adi),
+			lambda silindi, hata: self._silme_dogrulandi(
+				eposta, islem_id, klasor, dosya_adi, silindi, hata
+			),
+		)
+
+	def _silme_dogrulandi(self, eposta, islem_id, klasor, dosya_adi, silindi, hata):
+		self.dogrulanan_silmeler.discard(islem_id)
+		if self.kapatildi:
+			return
+		if hata or not silindi:
+			wx.CallLater(
+				10000,
+				self._silme_dogrulamasini_baslat,
+				eposta,
+				islem_id,
+				klasor,
+				dosya_adi,
+			)
+			return
+		if self.onbellek:
+			try:
+				self.onbellek.silme_tamamlandi(eposta, islem_id, klasor, dosya_adi)
+			except (OSError, sqlite3.Error):
+				self.onbellek = None
 		dosyalar = self.klasor_dosyalari.get(klasor, [])
 		self.klasor_dosyalari[klasor] = [dosya for dosya in dosyalar if dosya["ad"] != dosya_adi]
 		if self.aktif_klasor == klasor:
@@ -892,6 +1018,9 @@ class DosyaArsivimPenceresi(wx.Frame):
 			islem_id = islem["id"]
 			klasor = islem["klasor"]
 			dosya_adi = islem["dosya_adi"]
+			if islem["durum"] == "dogrulaniyor":
+				self._silme_dogrulamasini_baslat(eposta, islem_id, klasor, dosya_adi)
+				continue
 			arka_planda(
 				lambda klasor=klasor, dosya_adi=dosya_adi: istem.dosya_sil(
 					eposta, klasor, dosya_adi
@@ -1002,6 +1131,16 @@ class DosyaArsivimPenceresi(wx.Frame):
 		if self.aktif_klasor == kayit["klasor"]:
 			self.arayuzu_yenile()
 
+	def yukleme_iptali_tamamlandi(self, kayit):
+		if self.aktif_klasor == kayit["klasor"]:
+			self.arayuzu_yenile()
+		self._esitlemeyi_baslat()
+
+	def yukleme_iptali_hatali(self, kayit, hata):
+		if self.aktif_klasor == kayit["klasor"]:
+			self.arayuzu_yenile()
+		self._esitlemeyi_baslat(hata_goster=True)
+
 	def arayuzu_yenile(self):
 		self.GetMenuBar().Enable(self.KIMLIK_BAGLAN, not HESAP_DURUMU.bagli_mi)
 		self.GetMenuBar().Enable(self.KIMLIK_KES, HESAP_DURUMU.bagli_mi)
@@ -1028,8 +1167,13 @@ class DosyaArsivimPenceresi(wx.Frame):
 					baslangic = self.dosya_sayfasi * self.SAYFA_BASINA_DOSYA
 					bitis = baslangic + self.SAYFA_BASINA_DOSYA
 					for bilgi in dosyalar[baslangic:bitis]:
-						self.dosya_listesi.Append(bilgi["ad"])
-						self.gorunen_dosyalar[bilgi["ad"]] = bilgi
+						if bilgi.get("durum") == "siliniyor":
+							self.dosya_listesi.Append(
+								_("Siliniyor: {dosya}").format(dosya=bilgi["ad"])
+							)
+						else:
+							self.dosya_listesi.Append(bilgi["ad"])
+							self.gorunen_dosyalar[bilgi["ad"]] = bilgi
 					if self.dosya_sayfasi > 0:
 						self.onceki_sayfa_ogesi = _("Önceki sayfa")
 						self.dosya_listesi.Append(self.onceki_sayfa_ogesi)
@@ -1040,8 +1184,14 @@ class DosyaArsivimPenceresi(wx.Frame):
 					self.dosya_listesi.Append(_("Bu klasör boş."))
 				for kayit in kuyruktakiler:
 					dosya_adi = os.path.basename(kayit["yerel_yol"])
-					if kayit["durum"] == "yükleniyor":
-						self.dosya_listesi.Append(_("Arşivde işleniyor: %{oran} {dosya}").format(oran=kayit.get("yuzde", 0), dosya=dosya_adi))
+					if kayit["durum"] in ("iptal_ediliyor", "iptal_dogrulaniyor"):
+						self.dosya_listesi.Append(_("Siliniyor: {dosya}").format(dosya=dosya_adi))
+					elif kayit["durum"] == "yükleniyor":
+						self.dosya_listesi.Append(
+							_("Dosya yükleniyor: {dosya}, yüzde {oran}").format(
+								dosya=dosya_adi, oran=kayit.get("yuzde", 0)
+							)
+						)
 					elif kayit["durum"] == "arşivleniyor":
 						self.dosya_listesi.Append(_("Arşivde işleniyor: %100 {dosya}").format(dosya=dosya_adi))
 					elif kayit["durum"] == "bekliyor":

@@ -141,7 +141,7 @@ footer {
 <h1>My File Archive</h1>
 
 <p>
-<strong>Version:</strong> 26.8.12<br>
+<strong>Version:</strong> 26.8.14<br>
 <strong>Minimum supported NVDA version:</strong> 2026.1<br>
 <strong>Latest tested NVDA version:</strong> 2026.1.1<br>
 <strong>Developer:</strong> Mehmet Aykurt<br>
@@ -584,8 +584,13 @@ The current file status can be displayed in the list:
 </tr>
 
 <tr>
+<td>Uploading file</td>
+<td>The file is being transferred from your computer to the archive service. Progress percentage is shown when available.</td>
+</tr>
+
+<tr>
 <td>Processing in archive</td>
-<td>The file is being transferred or processed by the service. Progress percentage is shown when available.</td>
+<td>The transfer from your computer to the server has completed. You do not need to wait while the archive service records the file and updates its listings; you may continue working or close the add-on window.</td>
 </tr>
 
 <tr>
@@ -622,7 +627,7 @@ Restarts a previously paused upload queue.
 
 <li>
 <strong>Cancel uploads:</strong>
-Removes pending and ongoing upload tasks. Confirmation is requested before the operation.
+Cancels pending and ongoing upload tasks. Files that have reached the server are tracked individually while they are removed. Confirmation is requested before the operation.
 </li>
 
 <li>
@@ -632,8 +637,8 @@ Adds failed upload operations to the queue again.
 </ul>
 
 <div class="uyari">
-<strong>Caution:</strong>
-When an upload is cancelled, the add-on may also request removal of the transferred file from the archive service. However, the file may remain in the archive if the connection is interrupted or the service reports an error. Check the relevant folder after cancelling.
+<strong>Information:</strong>
+If the list says <strong>Deleting</strong>, removal of the file from the server is still in progress. You do not need to wait; you may continue working or close the add-on window. The operation record is retained, and the file is removed from the list after deletion is confirmed. A deletion request accepted by the server is not sent again when the add-on or NVDA restarts; only its result is checked. If deletion cannot be completed, NVDA announces that the file has been left on the server.
 </div>
 <h2 id="dosya-islemleri">7. File management</h2>
 
@@ -735,7 +740,7 @@ When the original file is deleted, removal of related derived files created by t
 </p>
 
 <p>
-If a deleted file continues to appear in the list, refresh the folder view or restart the add-on and check again.
+During this time, the file appears in the list with the <strong>Deleting</strong> status. You do not need to wait; you may continue working or close the add-on window. The file is removed from the list automatically after its deletion from the server is confirmed.
 </p>
 <h2 id="ayarlar">8. Settings</h2>
 
@@ -759,7 +764,7 @@ To change an option's state, press <kbd>Enter</kbd> while it is selected. Checke
 <tr>
 <td>Show notifications</td>
 <td>
-Provides NVDA notifications about completed uploads while the main window is closed.
+Provides NVDA notifications about upload progress, archive processing and completed uploads while the main window is closed.
 </td>
 </tr>
 
@@ -789,7 +794,7 @@ Because uploads can take a long time, you can use notifications to monitor their
 </p>
 
 <p>
-When <strong>Show notifications</strong> is enabled, NVDA announces completed uploads through an accessible notification.
+When <strong>Show notifications</strong> is enabled, NVDA announces upload status even while the main window is closed. A <strong>Processing in archive</strong> announcement means that the file transfer has completed; you can continue with other work without waiting. NVDA cannot announce notifications while it is completely closed; retained operation records are evaluated when NVDA starts again.
 </p>
 <h2 id="sorunlar">9. Important notes and troubleshooting</h2>
 
@@ -844,7 +849,7 @@ If a file does not appear immediately after upload, one of the following may app
 </p>
 
 <ul>
-<li>The file may still be processed by the archive service.</li>
+<li>If the list says <strong>Processing in archive</strong>, the file transfer has completed and the archive service is still updating its listing. You do not need to wait and may continue with other work.</li>
 
 <li>The list may not be up to date.</li>
 
@@ -852,7 +857,7 @@ If a file does not appear immediately after upload, one of the following may app
 </ul>
 
 <p>
-To resolve the issue, close and reopen the folder view, then check again after a short time.
+After the add-on confirms the server record, the file automatically appears under its normal name. If no operation status is shown, close and reopen the folder view to refresh the list.
 </p>
 
 <p>
@@ -862,20 +867,8 @@ If you are looking for derived files, make sure that <strong>Settings &gt; Show 
 <h3>9.4. Deleted file still appears</h3>
 
 <p>
-If a file continues to appear in the list after deletion, the operation may not yet be complete on the archive service.
+If the list says <strong>Deleting</strong>, removal from the server has not yet been confirmed. You do not need to wait or refresh the list repeatedly. The operation is monitored in the background, and the file disappears automatically when it completes. If the file returns under its normal name, deletion could not be completed and may be tried again.
 </p>
-
-<p>
-In this case:
-</p>
-
-<ul>
-<li>Refresh the folder view.</li>
-
-<li>Restart the add-on.</li>
-
-<li>Wait briefly and check again.</li>
-</ul>
 
 <p>
 If the file continues to appear for a long time, the service-side operation may not be complete.
@@ -984,7 +977,7 @@ The service information in this guide is based on the official sources listed ab
 </p>
 
 <p>
-<strong>Document version:</strong> 26.8.12<br>
+<strong>Document version:</strong> 26.8.14<br>
 <strong>Last updated:</strong> 12 August 2026
 </p>
 

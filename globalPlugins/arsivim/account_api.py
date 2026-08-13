@@ -10,12 +10,16 @@ import re
 import ssl
 import sys
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 
 import addonHandler
 addonHandler.initTranslation()
+
+import logHandler
 
 from .oturum_deposu import OturumDeposu
 
@@ -53,6 +57,8 @@ VARSAYILAN_KLASORLER = (
 	"Yedekler",
 	"Diğer",
 )
+S3_GECICI_HTTP_KODLARI = frozenset((429, 500, 502, 503, 504))
+S3_YENIDEN_DENEME_GECIKMELERI = (2, 5)
 
 
 class HesapHatasi(Exception):
@@ -85,6 +91,47 @@ class _IlerlemeliDosya:
 		if veri and self.bildir:
 			self.bildir(self.gonderilen, self.toplam_boyut)
 		return veri
+
+	def seek(self, konum, nereden=os.SEEK_SET):
+		"""Yönlendirme veya yeniden denemede dosyayı tekrar okunabilir kılar."""
+		sonuc = self.dosya.seek(konum, nereden)
+		if nereden == os.SEEK_SET and konum == 0:
+			self.gonderilen = 0
+		return sonuc
+
+	def tell(self):
+		return self.dosya.tell()
+
+
+class _ArsivYonlendirmeIsleyicisi(urllib.request.HTTPRedirectHandler):
+	"""IA-S3 tarafından PUT isteklerine verilen 307/308 yönlendirmelerini izler."""
+
+	@staticmethod
+	def _guvenilir_archive_hostu(host):
+		host = (host or "").lower().rstrip(".")
+		return host == "archive.org" or host.endswith(".archive.org")
+
+	def redirect_request(self, req, fp, code, msg, headers, newurl):
+		yontem = req.get_method()
+		if yontem not in ("PUT", "DELETE") or code not in (307, 308):
+			return super().redirect_request(req, fp, code, msg, headers, newurl)
+		hedef = urllib.parse.urlparse(newurl)
+		if hedef.scheme not in ("http", "https") or not self._guvenilir_archive_hostu(hedef.hostname):
+			raise urllib.error.HTTPError(req.full_url, code, msg, headers, fp)
+		if yontem == "PUT" and not hasattr(req.data, "seek"):
+			raise urllib.error.HTTPError(req.full_url, code, msg, headers, fp)
+		if req.data is not None and hasattr(req.data, "seek"):
+			req.data.seek(0)
+		yeni_basliklar = dict(req.headers)
+		yeni_basliklar.update(req.unredirected_hdrs)
+		return urllib.request.Request(
+			newurl,
+			data=req.data,
+			headers=yeni_basliklar,
+			origin_req_host=req.origin_req_host,
+			unverifiable=True,
+			method=yontem,
+		)
 
 
 class _S3AnahtarAyraci(HTMLParser):
@@ -141,6 +188,7 @@ class HesapIstemi:
 		self.acici = urllib.request.build_opener(
 			urllib.request.HTTPCookieProcessor(self.cerezler),
 			urllib.request.HTTPSHandler(context=self.ssl_baglami),
+			_ArsivYonlendirmeIsleyicisi(),
 		)
 		self.bekleyen_kod_belirteci = None
 		self.bekleyen_kod_epostasi = None
@@ -213,7 +261,7 @@ class HesapIstemi:
 		govde = None
 		basliklar = {
 			"Accept": "application/json",
-			"User-Agent": "DosyaArsivimNVDA/26.8.13",
+			"User-Agent": "DosyaArsivimNVDA/26.8.14",
 		}
 		if veri is not None:
 			govde = json.dumps(veri).encode("utf-8")
@@ -337,6 +385,27 @@ class HesapIstemi:
 		self.s3_anahtari = anahtar
 		self.s3_gizli_anahtari = gizli
 
+	@staticmethod
+	def _s3_hata_ayrintisi(hata):
+		"""IA-S3 XML yanıtından kimlik bilgisi içermeyen hata ayrıntısını alır."""
+		kod = None
+		mesaj = None
+		try:
+			govde = hata.read(64 * 1024)
+			kok = ET.fromstring(govde)
+			kod = kok.findtext("Code")
+			mesaj = kok.findtext("Message")
+		except (ET.ParseError, OSError, TypeError, ValueError):
+			pass
+		return kod, mesaj
+
+	@staticmethod
+	def _s3_kullanici_hatasi(hata_metni, http_kodu, servis_kodu=None):
+		ayrinti = f"HTTP {http_kodu}"
+		if servis_kodu:
+			ayrinti += f", {servis_kodu}"
+		return _("{mesaj} ({ayrinti})").format(mesaj=hata_metni, ayrinti=ayrinti)
+
 	def _s3_istegi(self, oge_kimligi, dosya_adi, method, veri=None, yeni_oge=False, ek_basliklar=None, hata_metni=None):
 		"""IA-S3 ile ana ögedeki tek bir dosya üzerinde işlem yapar."""
 		url = f"{S3_ADRESI}/{urllib.parse.quote(oge_kimligi)}/{urllib.parse.quote(dosya_adi)}"
@@ -352,16 +421,42 @@ class HesapIstemi:
 			})
 		if ek_basliklar:
 			basliklar.update(ek_basliklar)
-		istek = urllib.request.Request(url, data=veri, headers=basliklar, method=method)
-		try:
-			with self.acici.open(istek, timeout=45) as yanit:
-				return yanit.status
-		except urllib.error.HTTPError as hata:
-			if hata.code == 404 and method in ("HEAD", "DELETE"):
-				return None
-			raise HesapHatasi(hata_metni or _("Varsayılan klasörler oluşturulamadı."))
-		except (urllib.error.URLError, OSError):
-			raise HesapHatasi(hata_metni or _("Varsayılan klasörler oluşturulamadı."))
+		varsayilan_hata = hata_metni or _("Varsayılan klasörler oluşturulamadı.")
+		gecikmeler = (0,) + S3_YENIDEN_DENEME_GECIKMELERI
+		for deneme, gecikme in enumerate(gecikmeler):
+			if gecikme:
+				time.sleep(gecikme)
+			if veri is not None and hasattr(veri, "seek"):
+				veri.seek(0)
+			istek = urllib.request.Request(url, data=veri, headers=basliklar, method=method)
+			try:
+				with self.acici.open(istek, timeout=45) as yanit:
+					return yanit.status
+			except urllib.error.HTTPError as hata:
+				if hata.code == 404 and method in ("HEAD", "DELETE"):
+					return None
+				servis_kodu, servis_mesaji = self._s3_hata_ayrintisi(hata)
+				logHandler.log.warning(
+					"Dosya Arşivim IA-S3 isteği başarısız: yöntem=%s, HTTP=%s, kod=%s, ileti=%s, deneme=%s",
+					method,
+					hata.code,
+					servis_kodu or "bilinmiyor",
+					servis_mesaji or hata.reason,
+					deneme + 1,
+				)
+				if hata.code in S3_GECICI_HTTP_KODLARI and deneme + 1 < len(gecikmeler):
+					continue
+				raise HesapHatasi(self._s3_kullanici_hatasi(varsayilan_hata, hata.code, servis_kodu))
+			except (urllib.error.URLError, OSError) as hata:
+				logHandler.log.warning(
+					"Dosya Arşivim IA-S3 bağlantı hatası: yöntem=%s, tür=%s, deneme=%s",
+					method,
+					type(hata).__name__,
+					deneme + 1,
+				)
+				if deneme + 1 < len(gecikmeler):
+					continue
+				raise HesapHatasi(varsayilan_hata)
 
 	def varsayilan_klasorleri_olustur(self, eposta):
 		"""Ana öge ve boş klasörlerin kalıcı dizin kaydını ilk kez oluşturur."""
@@ -452,7 +547,7 @@ class HesapIstemi:
 	def tum_dosyalari_al(self, eposta, turetilmisleri_goster=False):
 		"""Ana ögedeki doğrudan klasör dosyalarını, isteğe göre türevlerle döndürür."""
 		oge_kimligi = self.ana_oge_kimligi(eposta)
-		url = f"{SUNUCU_ADRESI}/metadata/{urllib.parse.quote(oge_kimligi)}"
+		url = f"{SUNUCU_ADRESI}/metadata/{urllib.parse.quote(oge_kimligi)}?reCache=1"
 		try:
 			with self.acici.open(urllib.request.Request(url), timeout=30) as yanit:
 				sonuc = json.loads(yanit.read().decode("utf-8"))

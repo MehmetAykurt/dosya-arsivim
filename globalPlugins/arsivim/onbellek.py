@@ -115,7 +115,7 @@ class DosyaOnbellegi:
 			if "kaynak" not in sutunlar:
 				baglanti.execute("ALTER TABLE dosyalar ADD COLUMN kaynak TEXT NOT NULL DEFAULT 'original'")
 			baglanti.execute(
-				"""UPDATE islemler SET durum = 'bekliyor'
+				"""UPDATE islemler SET durum = 'dogrulaniyor'
 				WHERE tur = 'sil' AND durum = 'siliniyor'"""
 			)
 
@@ -142,16 +142,23 @@ class DosyaOnbellegi:
 		hesap_kimligi = self.hesap_kimligini_al(eposta)
 		with self._baglan() as baglanti:
 			kayitlar = baglanti.execute(
-				"""SELECT ad, boyut, yukleme_zamani, bicim, kaynak
+				"""SELECT ad, boyut, yukleme_zamani, bicim, kaynak, durum
 				FROM dosyalar
-				WHERE hesap_kimligi = ? AND klasor = ? AND durum = 'yuklendi'
+				WHERE hesap_kimligi = ? AND klasor = ? AND durum IN ('yuklendi', 'siliniyor')
 				AND (? OR kaynak = 'original')
 				ORDER BY ad COLLATE NOCASE""",
 				(hesap_kimligi, klasor, int(turetilmisleri_goster)),
 			).fetchall()
 		return [
-			{"ad": ad, "boyut": boyut, "yukleme_zamani": yukleme_zamani, "bicim": bicim, "kaynak": kaynak}
-			for ad, boyut, yukleme_zamani, bicim, kaynak in kayitlar
+			{
+				"ad": ad,
+				"boyut": boyut,
+				"yukleme_zamani": yukleme_zamani,
+				"bicim": bicim,
+				"kaynak": kaynak,
+				"durum": durum,
+			}
+			for ad, boyut, yukleme_zamani, bicim, kaynak, durum in kayitlar
 		]
 
 	def tum_dosyalari_esitle(self, eposta, klasorler, klasor_dosyalari):
@@ -254,23 +261,28 @@ class DosyaOnbellegi:
 		return kayit.lastrowid
 
 	def bekleyen_silmeleri_al(self, eposta):
-		"""Önceki çalışmadan kalan silmeleri sahiplenip yürütülmek üzere döndürür."""
+		"""Önceki çalışmadan kalan silmeleri durumlarını değiştirmeden döndürür."""
 		hesap_kimligi = self.hesap_kimligini_al(eposta)
 		with self._baglan() as baglanti:
 			kayitlar = baglanti.execute(
-				"""SELECT id, klasor, dosya_adi FROM islemler
-				WHERE hesap_kimligi = ? AND tur = 'sil' AND durum = 'bekliyor'
+				"""SELECT id, klasor, dosya_adi, durum FROM islemler
+				WHERE hesap_kimligi = ? AND tur = 'sil'
+				AND durum IN ('bekliyor', 'siliniyor', 'dogrulaniyor')
 				ORDER BY id""",
 				(hesap_kimligi,),
 			).fetchall()
-			baglanti.executemany(
-				"UPDATE islemler SET durum = 'siliniyor' WHERE id = ?",
-				[(islem_id,) for islem_id, klasor, dosya_adi in kayitlar],
-			)
 		return [
-			{"id": islem_id, "klasor": klasor, "dosya_adi": dosya_adi}
-			for islem_id, klasor, dosya_adi in kayitlar
+			{"id": islem_id, "klasor": klasor, "dosya_adi": dosya_adi, "durum": durum}
+			for islem_id, klasor, dosya_adi, durum in kayitlar
 		]
+
+	def silme_dogrulaniyor(self, islem_id):
+		"""Kabul edilen silme isteğini yalnızca sunucu doğrulaması bekleyen duruma getirir."""
+		with self._baglan() as baglanti:
+			baglanti.execute(
+				"UPDATE islemler SET durum = 'dogrulaniyor' WHERE id = ? AND tur = 'sil'",
+				(islem_id,),
+			)
 
 	def silme_tamamlandi(self, eposta, islem_id, klasor, dosya_adi):
 		"""Sunucuda tamamlanan silme işleminin yerel kaydını kaldırır."""

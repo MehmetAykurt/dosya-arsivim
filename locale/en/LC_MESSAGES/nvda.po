@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Dosya Arsivim 26.8.13\n"
+"Project-Id-Version: Dosya Arsivim 26.8.14\n"
 "PO-Revision-Date: 2026-07-31 00:00+0300\n"
 "Last-Translator: Mehmet Aykurt\n"
 "Language-Team: English\n"
@@ -128,12 +128,6 @@ msgstr "Waiting to upload: {dosya}"
 
 msgid "Yükleme hatası: {dosya}"
 msgstr "Upload error: {dosya}"
-
-msgid "Arşivde işleniyor: {dosya}"
-msgstr "Processing in the archive: {dosya}"
-
-msgid "Arşivde işleniyor: %{oran} {dosya}"
-msgstr "Processing in the archive: %{oran} {dosya}"
 
 msgid "Arşivde işleniyor: %100 {dosya}"
 msgstr "Processing in the archive: 100% {dosya}"
@@ -404,6 +398,24 @@ msgstr "There are no uploads to cancel."
 
 msgid "Yüklemeleri iptal et"
 msgstr "Cancel uploads"
+
+msgid "Siliniyor: {dosya}"
+msgstr "Deleting: {dosya}"
+
+msgid "Yükleme tamamlandı. Dosyanız arşivde işlenirken çalışmalarınıza devam edebilirsiniz."
+msgstr "Upload complete. You can continue working while your file is being processed in the archive."
+
+msgid "Dosyanız sunucudan kaldırılıyor. Bu sırada çalışmalarınıza devam edebilirsiniz."
+msgstr "Your file is being removed from the server. You can continue working in the meantime."
+
+msgid "Dosyalarınız sunucudan kaldırılıyor. Bu sırada çalışmalarınıza devam edebilirsiniz."
+msgstr "Your files are being removed from the server. You can continue working in the meantime."
+
+msgid "{dosya} yüklemesi iptal edilemedi. Dosya sunucuda bırakıldı."
+msgstr "The upload of {dosya} could not be cancelled. The file was left on the server."
+
+msgid "{mesaj} ({ayrinti})"
+msgstr "{mesaj} ({ayrinti})"
 
 msgid ""
 "Yükleme işlemleri iptal edilecek.\n"

@@ -141,7 +141,7 @@ footer {
 <h1>Dosya Arşivim</h1>
 
 <p>
-<strong>Sürüm:</strong> 26.8.12<br>
+<strong>Sürüm:</strong> 26.8.14<br>
 <strong>Desteklenen en düşük NVDA sürümü:</strong> 2026.1<br>
 <strong>Son test edilen NVDA sürümü:</strong> 2026.1.1<br>
 <strong>Geliştirici:</strong> Mehmet Aykurt<br>
@@ -584,8 +584,13 @@ Dosyaların mevcut durumu liste içerisinde görüntülenebilir:
 </tr>
 
 <tr>
+<td>Dosya yükleniyor</td>
+<td>Dosya bilgisayarınızdan arşiv hizmetine aktarılmaktadır. Kullanılabilir olduğunda ilerleme yüzdesi de gösterilir.</td>
+</tr>
+
+<tr>
 <td>Arşivde işleniyor</td>
-<td>Dosya aktarılıyor veya hizmet tarafından işlenmektedir. Kullanılabilir olduğunda ilerleme yüzdesi de gösterilir.</td>
+<td>Dosyanın bilgisayarınızdan sunucuya aktarımı tamamlanmıştır. Arşiv hizmeti dosyayı kaydedip listelere yansıtırken beklemeniz gerekmez; çalışmalarınıza devam edebilir veya eklenti penceresini kapatabilirsiniz.</td>
 </tr>
 
 <tr>
@@ -622,7 +627,7 @@ Daha önce duraklatılmış yükleme kuyruğunu yeniden çalıştırır.
 
 <li>
 <strong>Yüklemeleri iptal et:</strong>
-Bekleyen ve devam eden yükleme görevlerini kaldırır. İşlem öncesinde kullanıcı onayı istenir.
+Bekleyen ve devam eden yükleme görevlerini iptal eder. Sunucuya ulaşmış dosyaların kaldırılması ayrı ayrı izlenir. İşlem öncesinde kullanıcı onayı istenir.
 </li>
 
 <li>
@@ -632,8 +637,8 @@ Başarısız olan yükleme işlemlerini tekrar kuyruğa ekler.
 </ul>
 
 <div class="uyari">
-<strong>Dikkat:</strong>
-Bir yükleme iptal edildiğinde eklenti, arşiv hizmetine aktarılmış olan dosyanın da kaldırılması için işlem başlatabilir. Ancak bağlantı kesilmesi veya hizmet kaynaklı bir hata oluşması durumunda dosyanın arşivde kalma ihtimali vardır. İptal işleminden sonra ilgili klasörün kontrol edilmesi önerilir.
+<strong>Bilgi:</strong>
+Listede <strong>Siliniyor</strong> yazıyorsa dosyanın sunucudan kaldırılması sürüyordur. Beklemeniz gerekmez; çalışmalarınıza devam edebilir veya eklenti penceresini kapatabilirsiniz. İşlem kaydı korunur; silme doğrulandığında dosya listeden kalkar. Sunucunun kabul ettiği silme isteği eklenti veya NVDA yeniden açıldığında tekrar gönderilmez; yalnızca sonucu denetlenir. Silme tamamlanamazsa dosyanın sunucuda bırakıldığı NVDA tarafından bildirilir.
 </div>
 <h2 id="dosya-islemleri">7. Dosya yönetimi</h2>
 
@@ -735,7 +740,7 @@ Güvenlik amacıyla silme işleminden önce kullanıcı onayı istenir. Onay ver
 </p>
 
 <p>
-Silinen bir dosya listede görünmeye devam ederse klasör görünümünü yenileyin ya da eklentiyi yeniden başlattıktan sonra durumu tekrar kontrol edin.
+Bu sırada dosya listede <strong>Siliniyor</strong> durumuyla görünür. Beklemeniz gerekmez; çalışmalarınıza devam edebilir veya eklenti penceresini kapatabilirsiniz. Sunucudan silindiği doğrulanınca dosya listeden otomatik olarak kaldırılır.
 </p>
 <h2 id="ayarlar">8. Ayarlar</h2>
 
@@ -759,7 +764,7 @@ Bir seçeneğin durumunu değiştirmek için ilgili seçeneğin üzerinde <kbd>E
 <tr>
 <td>Bildirimleri göster</td>
 <td>
-Ana pencere kapalıyken tamamlanan yükleme işlemleri hakkında NVDA aracılığıyla bildirim alınmasını sağlar.
+Ana pencere kapalıyken yükleme ilerlemesi, arşivde işlenme aşaması ve tamamlanan yüklemeler hakkında NVDA aracılığıyla bildirim alınmasını sağlar.
 </td>
 </tr>
 
@@ -789,7 +794,7 @@ Yükleme işlemleri uzun sürebileceğinden, ana pencere kapalıyken işlemlerin
 </p>
 
 <p>
-<strong>Bildirimleri göster</strong> seçeneği etkin olduğunda, tamamlanan yükleme işlemleri NVDA tarafından okunabilir bir bildirim aracılığıyla duyurulur.
+<strong>Bildirimleri göster</strong> seçeneği etkin olduğunda, ana pencere kapalı olsa bile yükleme durumu NVDA tarafından duyurulur. <strong>Arşivde işleniyor</strong> bildirimi, dosya aktarımının tamamlandığını belirtir; bu aşamada beklemeden diğer çalışmalarınıza devam edebilirsiniz. NVDA tamamen kapalıyken bildirim verilmez; korunan işlem kayıtları NVDA yeniden açıldığında değerlendirilir.
 </p>
 <h2 id="sorunlar">9. Bilinmesi gerekenler ve sorun giderme</h2>
 
@@ -844,7 +849,7 @@ Bir dosya yükleme işleminden sonra hemen görüntülenmiyorsa aşağıdaki dur
 </p>
 
 <ul>
-<li>Dosya hâlen arşiv hizmeti tarafından işleniyor olabilir.</li>
+<li>Listede <strong>Arşivde işleniyor</strong> yazıyorsa dosyanın aktarımı tamamlanmıştır ve arşiv hizmetinin listeyi güncellemesi sürüyordur. Beklemeniz gerekmez; diğer çalışmalarınıza devam edebilirsiniz.</li>
 
 <li>Liste güncel olmayabilir.</li>
 
@@ -852,7 +857,7 @@ Bir dosya yükleme işleminden sonra hemen görüntülenmiyorsa aşağıdaki dur
 </ul>
 
 <p>
-Sorunu gidermek için klasör görünümünü kapatıp yeniden açın ve kısa bir süre sonra tekrar kontrol edin.
+Eklenti sunucudaki kaydı doğruladığında dosya otomatik olarak normal adıyla gösterilir. Herhangi bir işlem durumu görünmüyorsa klasör görünümünü kapatıp yeniden açarak listeyi güncelleyin.
 </p>
 
 <p>
@@ -862,20 +867,8 @@ Türetilmiş dosyaları arıyorsanız <strong>Ayarlar &gt; Türetilmiş dosyalar
 <h3>9.4. Silinen dosya hâlâ görünüyor</h3>
 
 <p>
-Silme işlemi sonrasında dosyanın listede görünmeye devam etmesi, arşiv hizmetindeki işlemin henüz tamamlanmamış olmasından kaynaklanabilir.
+Listede <strong>Siliniyor</strong> yazması, sunucudaki kaldırma işleminin henüz doğrulanmadığı anlamına gelir. Beklemeniz veya listeyi sürekli yenilemeniz gerekmez. İşlem arka planda izlenir ve tamamlandığında dosya otomatik olarak listeden kalkar. Dosya yeniden normal adıyla görünürse silme tamamlanamamıştır ve yeniden denenebilir.
 </p>
-
-<p>
-Bu durumda:
-</p>
-
-<ul>
-<li>Klasör görünümünü yenileyin.</li>
-
-<li>Eklentiyi yeniden başlatın.</li>
-
-<li>Kısa bir süre bekledikten sonra tekrar kontrol edin.</li>
-</ul>
 
 <p>
 Dosya uzun süre görünmeye devam ederse hizmet tarafındaki işlem tamamlanmamış olabilir.
@@ -988,7 +981,7 @@ zaman içerisinde değişebilir.
 </p>
 
 <p>
-<strong>Belge sürümü:</strong> 26.8.12<br>
+<strong>Belge sürümü:</strong> 26.8.14<br>
 <strong>Son düzenleme:</strong> 12 Ağustos 2026
 </p>
 
