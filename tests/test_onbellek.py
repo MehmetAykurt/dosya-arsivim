@@ -27,6 +27,61 @@ spec.loader.exec_module(onbellek)
 
 
 class SilmeGorunurluguTesti(unittest.TestCase):
+	def test_ayni_dosya_icin_ikinci_silme_istegi_olusturulmaz(self):
+		with tempfile.TemporaryDirectory() as ayar_klasoru:
+			depo = onbellek.DosyaOnbellegi(ayar_klasoru)
+			eposta = "deneme@example.com"
+			depo.tum_dosyalari_esitle(
+				eposta,
+				["Belgeler"],
+				{"Belgeler": [{"ad": "deneme.txt", "kaynak": "original"}]},
+			)
+
+			ilk_id, ilk_yeni = depo.silmeyi_baslat_ve_durumu_al(eposta, "Belgeler", "deneme.txt")
+			ikinci_id, ikinci_yeni = depo.silmeyi_baslat_ve_durumu_al(eposta, "Belgeler", "deneme.txt")
+
+			self.assertTrue(ilk_yeni)
+			self.assertFalse(ikinci_yeni)
+			self.assertEqual(ikinci_id, ilk_id)
+			self.assertEqual(len(depo.bekleyen_silmeleri_al(eposta)), 1)
+
+	def test_sunucuda_artik_olmayan_dosyanin_bekleyen_silmesi_esitlemede_tamamlanir(self):
+		with tempfile.TemporaryDirectory() as ayar_klasoru:
+			depo = onbellek.DosyaOnbellegi(ayar_klasoru)
+			eposta = "deneme@example.com"
+			depo.tum_dosyalari_esitle(
+				eposta,
+				["Belgeler"],
+				{"Belgeler": [{"ad": "deneme.txt", "kaynak": "original"}]},
+			)
+			islem_id = depo.silmeyi_baslat(eposta, "Belgeler", "deneme.txt")
+			depo.silme_dogrulaniyor(islem_id)
+
+			depo.tum_dosyalari_esitle(eposta, ["Belgeler"], {})
+
+			self.assertEqual(depo.klasordeki_dosyalari_al(eposta, "Belgeler"), [])
+			self.assertEqual(depo.bekleyen_silmeleri_al(eposta), [])
+
+	def test_turetilmis_dosya_ayara_gore_onbellekten_listelenir(self):
+		with tempfile.TemporaryDirectory() as ayar_klasoru:
+			depo = onbellek.DosyaOnbellegi(ayar_klasoru)
+			eposta = "deneme@example.com"
+			depo.tum_dosyalari_esitle(
+				eposta,
+				["Ses ve Müzik"],
+				{
+					"Ses ve Müzik": [
+						{"ad": "ses.wav", "kaynak": "original"},
+						{"ad": "ses_vbr.mp3", "kaynak": "derivative", "bicim": "VBR MP3"},
+					],
+				},
+			)
+
+			gizli = depo.klasordeki_dosyalari_al(eposta, "Ses ve Müzik", False)
+			gorunur = depo.klasordeki_dosyalari_al(eposta, "Ses ve Müzik", True)
+			self.assertEqual([dosya["ad"] for dosya in gizli], ["ses.wav"])
+			self.assertEqual([dosya["ad"] for dosya in gorunur], ["ses.wav", "ses_vbr.mp3"])
+
 	def test_silme_dogrulanana_kadar_dosya_siliniyor_durumuyla_listelenir(self):
 		with tempfile.TemporaryDirectory() as ayar_klasoru:
 			depo = onbellek.DosyaOnbellegi(ayar_klasoru)

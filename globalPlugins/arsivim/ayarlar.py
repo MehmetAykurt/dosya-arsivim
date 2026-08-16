@@ -12,12 +12,17 @@ class Ayarlar:
 		klasor = os.path.join(os.fspath(globalVars.appArgs.configPath), "dosya_arsivim")
 		self.dosya_yolu = os.path.join(klasor, "ayarlar.json")
 		self.bildirimleri_goster = True
+		self.turev_uretimini_kapat = False
 		self.turetilmis_dosyalari_goster = False
 		try:
 			with open(self.dosya_yolu, "r", encoding="utf-8") as dosya:
 				ayarlar = json.load(dosya)
 				self.bildirimleri_goster = bool(ayarlar.get("bildirimleri_goster", True))
-				self.turetilmis_dosyalari_goster = bool(ayarlar.get("turetilmis_dosyalari_goster", False))
+				self.turev_uretimini_kapat = bool(ayarlar.get("turev_uretimini_kapat", False))
+				self.turetilmis_dosyalari_goster = (
+					bool(ayarlar.get("turetilmis_dosyalari_goster", False))
+					and not self.turev_uretimini_kapat
+				)
 		except (OSError, ValueError, TypeError):
 			pass
 
@@ -28,6 +33,7 @@ class Ayarlar:
 			with open(gecici_yol, "w", encoding="utf-8") as dosya:
 				json.dump({
 					"bildirimleri_goster": self.bildirimleri_goster,
+					"turev_uretimini_kapat": self.turev_uretimini_kapat,
 					"turetilmis_dosyalari_goster": self.turetilmis_dosyalari_goster,
 				}, dosya)
 			os.replace(gecici_yol, self.dosya_yolu)

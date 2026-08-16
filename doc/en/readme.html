@@ -141,7 +141,7 @@ footer {
 <h1>My File Archive</h1>
 
 <p>
-<strong>Version:</strong> 26.8.14<br>
+<strong>Version:</strong> 26.8.15<br>
 <strong>Minimum supported NVDA version:</strong> 2026.1<br>
 <strong>Latest tested NVDA version:</strong> 2026.1.1<br>
 <strong>Developer:</strong> Mehmet Aykurt<br>
@@ -496,12 +496,12 @@ When you move to another file, the detail cycle starts again with the file name.
 
 <tr>
 <td>Settings</td>
-<td>Lets you manage notifications and file visibility options.</td>
+<td>Lets you manage notifications, derivative generation and derived-file visibility.</td>
 </tr>
 
 <tr>
 <td>Uploads</td>
-<td>Lets you control ongoing and pending upload operations.</td>
+<td>Lets you manage the upload queue and monitor Internet Archive server operations.</td>
 </tr>
 
 <tr>
@@ -566,6 +566,10 @@ When several files are selected, the add-on adds them to the upload queue and pr
 </p>
 
 <p>
+If an upload with the same target file name is already queued for the same account and folder, a second record is not created. NVDA announces files that were not added again. Before uploading or deleting, the add-on checks Internet Archive's load status; when the server explicitly reports overload, an unnecessary write request is not sent.
+</p>
+
+<p>
 The current file status can be displayed in the list:
 </p>
 
@@ -590,7 +594,7 @@ The current file status can be displayed in the list:
 
 <tr>
 <td>Processing in archive</td>
-<td>The transfer from your computer to the server has completed. You do not need to wait while the archive service records the file and updates its listings; you may continue working or close the add-on window.</td>
+<td>The transfer from your computer to the server has completed. At this stage, an information dialog with an OK button explains that the upload is complete and archive processing may continue. You do not need to wait while the archive service records the file and updates its listings; you may continue working or close the add-on window.</td>
 </tr>
 
 <tr>
@@ -634,11 +638,35 @@ Cancels pending and ongoing upload tasks. Files that have reached the server are
 <strong>Retry failed uploads:</strong>
 Adds failed upload operations to the queue again.
 </li>
+
+<li>
+<strong>Server operations:</strong>
+Shows queued, running, failed or paused Internet Archive tasks for your archive item.
+</li>
 </ul>
 
 <div class="uyari">
 <strong>Information:</strong>
 If the list says <strong>Deleting</strong>, removal of the file from the server is still in progress. You do not need to wait; you may continue working or close the add-on window. The operation record is retained, and the file is removed from the list after deletion is confirmed. A deletion request accepted by the server is not sent again when the add-on or NVDA restarts; only its result is checked. If deletion cannot be completed, NVDA announces that the file has been left on the server.
+</div>
+
+<h3>6.5. Monitoring server operations</h3>
+
+<p>
+The <strong>Uploads &gt; Server operations</strong> window presents the actual task states reported by Internet Archive for your archive item in an accessible list. Its summary shows the number of queued, running, failed and paused tasks.
+</p>
+
+<p>
+The list refreshes every 10 seconds while tasks are active and every 30 seconds when no task is active. After a network error, automatic retries occur after 5, 15 and 30 seconds, for no more than three retries. If the problem continues, automatic refresh stops and you can use the <strong>Refresh</strong> button. The selected task and keyboard focus are preserved during refresh, and overlapping refresh requests are prevented.
+</p>
+
+<p>
+Only tasks with the <strong>Error</strong> status can be restarted with the <strong>Rerun failed task</strong> button. The same task can be rerun only once while the window remains open. Paused tasks are not modified because Internet Archive does not document a safe general-user resume command for them.
+</p>
+
+<div class="uyari">
+<strong>Security:</strong>
+The Server operations window displays only necessary fields such as the task number, operation type and status. Email addresses, access keys, server names, task arguments and raw task logs are not displayed.
 </div>
 <h2 id="dosya-islemleri">7. File management</h2>
 
@@ -680,7 +708,7 @@ While the download is in progress, only the <strong>Cancel</strong> option for s
 <h3>7.2. Copying a file link to the clipboard</h3>
 
 <p>
-<strong>Copy link to clipboard</strong> copies the selected file's direct access link to the Windows clipboard.
+The <strong>Copy link</strong> option copies only the direct access link of the selected original file that you uploaded to the Windows clipboard. Derived-file, ZIP and torrent links are not shown in this menu.
 </p>
 
 <p>
@@ -699,7 +727,7 @@ The direct-link feature makes files easy to share. However, remember that third 
 <h3>7.3. Viewing file information</h3>
 
 <p>
-<strong>File information</strong> displays detailed information about the selected file.
+<strong>File information</strong> displays detailed information about the selected file. The link field shows only the direct access link of the original file that you uploaded; derived-file, ZIP and torrent links are not added.
 </p>
 
 <p>
@@ -769,6 +797,13 @@ Provides NVDA notifications about upload progress, archive processing and comple
 </tr>
 
 <tr>
+<td>Disable derivative generation</td>
+<td>
+When checked, asks Internet Archive not to start its heavyweight derivative-generation process for future uploads. It does not delete derivatives that already exist.
+</td>
+</tr>
+
+<tr>
 <td>Show derived files</td>
 <td>
 Shows in lists the additional files automatically created by the archive service from original files.
@@ -777,7 +812,7 @@ Shows in lists the additional files automatically created by the archive service
 </tbody>
 </table>
 
-<h3>8.1. Visibility of derived files</h3>
+<h3>8.1. Derivative generation and visibility of derived files</h3>
 
 <p>
 For some file types, the archive service may automatically create additional files in different formats. For example, audio and video files may have files prepared for playback or conversion to other formats.
@@ -785,6 +820,14 @@ For some file types, the archive service may automatically create additional fil
 
 <p>
 If you do not want to see these files, disable <strong>Show derived files</strong>. For everyday use, displaying only the original files you uploaded provides a simpler list.
+</p>
+
+<p>
+When <strong>Disable derivative generation</strong> is checked, the setting applies only to future uploads. The original file is still uploaded, but Internet Archive is asked not to create MP3, viewing copies or similar additional formats. In this state, <strong>Show derived files</strong> is switched off and hidden from the Settings menu. It returns to the menu when derivative generation is enabled again.
+</p>
+
+<p>
+Virus scanning and Internet Archive's mandatory internal checks are separate from this setting and cannot be disabled by the add-on. Disabling derivatives may reduce server work, but converted formats for playback or web viewing may not be created.
 </p>
 
 <h3>8.2. Using notifications</h3>
@@ -795,6 +838,10 @@ Because uploads can take a long time, you can use notifications to monitor their
 
 <p>
 When <strong>Show notifications</strong> is enabled, NVDA announces upload status even while the main window is closed. A <strong>Processing in archive</strong> announcement means that the file transfer has completed; you can continue with other work without waiting. NVDA cannot announce notifications while it is completely closed; retained operation records are evaluated when NVDA starts again.
+</p>
+
+<p>
+The information dialog shown when transfer finishes clearly states that the file has reached the server and archive processing may continue in the background. If notifications are disabled and the main My File Archive window is closed, this information dialog is not shown.
 </p>
 <h2 id="sorunlar">9. Important notes and troubleshooting</h2>
 
@@ -977,8 +1024,8 @@ The service information in this guide is based on the official sources listed ab
 </p>
 
 <p>
-<strong>Document version:</strong> 26.8.14<br>
-<strong>Last updated:</strong> 12 August 2026
+<strong>Document version:</strong> 26.8.15<br>
+<strong>Last updated:</strong> 16 August 2026
 </p>
 
 </footer>

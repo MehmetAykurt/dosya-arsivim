@@ -141,7 +141,7 @@ footer {
 <h1>Dosya Arşivim</h1>
 
 <p>
-<strong>Sürüm:</strong> 26.8.14<br>
+<strong>Sürüm:</strong> 26.8.15<br>
 <strong>Desteklenen en düşük NVDA sürümü:</strong> 2026.1<br>
 <strong>Son test edilen NVDA sürümü:</strong> 2026.1.1<br>
 <strong>Geliştirici:</strong> Mehmet Aykurt<br>
@@ -496,12 +496,12 @@ Başka bir dosyaya geçildiğinde bilgi dolaşımı yeniden dosya adı bilgisind
 
 <tr>
 <td>Ayarlar</td>
-<td>Bildirimler ve dosya görünürlüğü seçeneklerinin yönetilmesini sağlar.</td>
+<td>Bildirimlerin, türev üretiminin ve türetilmiş dosya görünürlüğünün yönetilmesini sağlar.</td>
 </tr>
 
 <tr>
 <td>Yüklemeler</td>
-<td>Devam eden veya bekleyen yükleme işlemlerinin kontrol edilmesini sağlar.</td>
+<td>Yükleme kuyruğunun ve Archive.org üzerindeki sunucu işlemlerinin izlenmesini ve yönetilmesini sağlar.</td>
 </tr>
 
 <tr>
@@ -566,6 +566,10 @@ Birden fazla dosya seçildiğinde eklenti, dosyaları yükleme kuyruğuna ekler 
 </p>
 
 <p>
+Aynı hesap ve klasörde aynı dosya adına karşılık gelen bir yükleme zaten kuyruktaysa ikinci bir kayıt oluşturulmaz. Yeniden eklenmeyen dosyalar NVDA tarafından bildirilir. Yükleme ve silme öncesinde Archive.org yoğunluk denetimi yapılır; sunucu açıkça yoğun olduğunu bildirirse gereksiz bir yazma isteği gönderilmez.
+</p>
+
+<p>
 Dosyaların mevcut durumu liste içerisinde görüntülenebilir:
 </p>
 
@@ -590,7 +594,7 @@ Dosyaların mevcut durumu liste içerisinde görüntülenebilir:
 
 <tr>
 <td>Arşivde işleniyor</td>
-<td>Dosyanın bilgisayarınızdan sunucuya aktarımı tamamlanmıştır. Arşiv hizmeti dosyayı kaydedip listelere yansıtırken beklemeniz gerekmez; çalışmalarınıza devam edebilir veya eklenti penceresini kapatabilirsiniz.</td>
+<td>Dosyanın bilgisayarınızdan sunucuya aktarımı tamamlanmıştır. Bu aşamada yüklemenin tamamlandığını ve arşiv işlemesinin sürebileceğini açıklayan Tamam düğmeli bir bilgi penceresi gösterilir. Arşiv hizmeti dosyayı kaydedip listelere yansıtırken beklemeniz gerekmez; çalışmalarınıza devam edebilir veya eklenti penceresini kapatabilirsiniz.</td>
 </tr>
 
 <tr>
@@ -634,11 +638,35 @@ Bekleyen ve devam eden yükleme görevlerini iptal eder. Sunucuya ulaşmış dos
 <strong>Hatalı yüklemeleri yeniden dene:</strong>
 Başarısız olan yükleme işlemlerini tekrar kuyruğa ekler.
 </li>
+
+<li>
+<strong>Sunucu işlemleri:</strong>
+Archive.org üzerinde arşiv öğeniz için bekleyen, çalışan, hata veren veya duraklatılmış görevleri gösterir.
+</li>
 </ul>
 
 <div class="uyari">
 <strong>Bilgi:</strong>
 Listede <strong>Siliniyor</strong> yazıyorsa dosyanın sunucudan kaldırılması sürüyordur. Beklemeniz gerekmez; çalışmalarınıza devam edebilir veya eklenti penceresini kapatabilirsiniz. İşlem kaydı korunur; silme doğrulandığında dosya listeden kalkar. Sunucunun kabul ettiği silme isteği eklenti veya NVDA yeniden açıldığında tekrar gönderilmez; yalnızca sonucu denetlenir. Silme tamamlanamazsa dosyanın sunucuda bırakıldığı NVDA tarafından bildirilir.
+</div>
+
+<h3>6.5. Sunucu işlemlerini izleme</h3>
+
+<p>
+<strong>Yüklemeler &gt; Sunucu işlemleri</strong> penceresi, Archive.org'un arşiv öğeniz için bildirdiği gerçek görev durumlarını erişilebilir bir listede gösterir. Özet bölümünde kuyrukta, çalışan, hata veren ve duraklatılmış görevlerin sayısı yer alır.
+</p>
+
+<p>
+Etkin görevler varken liste 10 saniyede, etkin görev yokken 30 saniyede bir otomatik yenilenir. Ağ hatasında 5, 15 ve 30 saniye sonra en fazla üç otomatik yeniden deneme yapılır. Sorun sürerse otomatik yenileme durur ve <strong>Yenile</strong> düğmesi kullanılabilir. Yenileme sırasında seçili görev ve klavye odağı korunur; aynı anda birden fazla yenileme isteği gönderilmez.
+</p>
+
+<p>
+Yalnızca <strong>Hata</strong> durumundaki görevler <strong>Hatalı görevi yeniden çalıştır</strong> düğmesiyle yeniden başlatılabilir. Aynı görev, pencere açık kaldığı sürece yalnızca bir kez yeniden çalıştırılır. <strong>Duraklatıldı</strong> durumundaki görevlere, Archive.org tarafından genel kullanıcılar için belgelenmiş güvenli bir devam komutu bulunmadığından müdahale edilmez.
+</p>
+
+<div class="uyari">
+<strong>Güvenlik:</strong>
+Sunucu işlemleri penceresi yalnızca görev numarası, işlem türü ve durum gibi gerekli alanları gösterir. E-posta adresi, erişim anahtarı, sunucu adı, görev argümanları ve ham görev günlükleri görüntülenmez.
 </div>
 <h2 id="dosya-islemleri">7. Dosya yönetimi</h2>
 
@@ -680,7 +708,7 @@ Açılan kaydetme penceresinde hedef klasörü belirleyin.
 <h3>7.2. Dosya bağlantısını panoya kopyalama</h3>
 
 <p>
-<strong>Bağlantıyı panoya kopyala</strong> seçeneği, seçili dosyanın doğrudan erişim bağlantısını Windows panosuna aktarır.
+<strong>Bağlantıyı kopyala</strong> seçeneği, yalnızca seçili olarak yüklediğiniz özgün dosyanın doğrudan erişim bağlantısını Windows panosuna aktarır. Türetilmiş dosya, ZIP veya torrent bağlantıları bu menüde gösterilmez.
 </p>
 
 <p>
@@ -699,7 +727,7 @@ Doğrudan bağlantı özelliği, dosyaların kolay paylaşılmasını sağlar. A
 <h3>7.3. Dosya bilgilerini görüntüleme</h3>
 
 <p>
-<strong>Dosya bilgileri</strong> seçeneği, seçili dosyaya ait ayrıntılı bilgilerin görüntülenmesini sağlar.
+<strong>Dosya bilgileri</strong> seçeneği, seçili dosyaya ait ayrıntılı bilgilerin görüntülenmesini sağlar. Bağlantı alanında yalnızca yüklediğiniz özgün dosyanın doğrudan erişim bağlantısı gösterilir; türetilmiş dosya, ZIP ve torrent bağlantıları eklenmez.
 </p>
 
 <p>
@@ -769,6 +797,13 @@ Ana pencere kapalıyken yükleme ilerlemesi, arşivde işlenme aşaması ve tama
 </tr>
 
 <tr>
+<td>Türev üretimini kapat</td>
+<td>
+İşaretlendiğinde bundan sonra yüklenecek dosyalar için Archive.org'un ağır türev üretim işleminin başlatılmamasını ister. Daha önce oluşturulmuş türevleri silmez.
+</td>
+</tr>
+
+<tr>
 <td>Türetilmiş dosyaları göster</td>
 <td>
 Arşiv hizmeti tarafından özgün dosyalardan otomatik olarak oluşturulan ek dosyaların listelerde görüntülenmesini sağlar.
@@ -777,7 +812,7 @@ Arşiv hizmeti tarafından özgün dosyalardan otomatik olarak oluşturulan ek d
 </tbody>
 </table>
 
-<h3>8.1. Türetilmiş dosyaların görünürlüğü</h3>
+<h3>8.1. Türev üretimi ve türetilmiş dosyaların görünürlüğü</h3>
 
 <p>
 Bazı dosya türleri için arşiv hizmeti tarafından otomatik olarak farklı biçimlerde ek dosyalar oluşturulabilir. Örneğin ses ve video dosyalarında oynatma veya farklı biçimlere dönüştürme amacıyla hazırlanan dosyalar bulunabilir.
@@ -785,6 +820,14 @@ Bazı dosya türleri için arşiv hizmeti tarafından otomatik olarak farklı bi
 
 <p>
 Bu dosyaları görmek istemiyorsanız <strong>Türetilmiş dosyaları göster</strong> seçeneğini devre dışı bırakabilirsiniz. Günlük kullanımda yalnızca yüklediğiniz özgün dosyaların görüntülenmesi daha sade bir liste sağlar.
+</p>
+
+<p>
+<strong>Türev üretimini kapat</strong> işaretlendiğinde ayar yalnızca sonraki yüklemelere uygulanır. Özgün dosya yine yüklenir; ancak MP3, görüntüleme kopyası veya benzeri ek biçimlerin üretilmemesi istenir. Bu durumda <strong>Türetilmiş dosyaları göster</strong> seçeneği kapatılır ve Ayarlar menüsünden gizlenir. Türev üretimi yeniden açıldığında görünürlük seçeneği menüye geri gelir.
+</p>
+
+<p>
+Virüs taraması ve Archive.org'un zorunlu iç denetimleri bu ayardan ayrıdır ve eklenti tarafından kapatılamaz. Türev üretimini kapatmak sunucu yükünü azaltabilir; buna karşın MP3, torrent dışındaki dönüştürülmüş biçimler veya web oynatmaya yönelik kopyalar oluşmayabilir.
 </p>
 
 <h3>8.2. Bildirimlerin kullanımı</h3>
@@ -795,6 +838,10 @@ Yükleme işlemleri uzun sürebileceğinden, ana pencere kapalıyken işlemlerin
 
 <p>
 <strong>Bildirimleri göster</strong> seçeneği etkin olduğunda, ana pencere kapalı olsa bile yükleme durumu NVDA tarafından duyurulur. <strong>Arşivde işleniyor</strong> bildirimi, dosya aktarımının tamamlandığını belirtir; bu aşamada beklemeden diğer çalışmalarınıza devam edebilirsiniz. NVDA tamamen kapalıyken bildirim verilmez; korunan işlem kayıtları NVDA yeniden açıldığında değerlendirilir.
+</p>
+
+<p>
+Aktarım tamamlandığında gösterilen bilgi penceresi, dosyanın sunucuya ulaştığını ve arşiv işlemesinin arka planda sürebileceğini açıkça belirtir. Bildirimler kapalı ve ana Dosya Arşivim penceresi kapalıysa bu bilgi penceresi gösterilmez.
 </p>
 <h2 id="sorunlar">9. Bilinmesi gerekenler ve sorun giderme</h2>
 
@@ -981,8 +1028,8 @@ zaman içerisinde değişebilir.
 </p>
 
 <p>
-<strong>Belge sürümü:</strong> 26.8.14<br>
-<strong>Son düzenleme:</strong> 12 Ağustos 2026
+<strong>Belge sürümü:</strong> 26.8.15<br>
+<strong>Son düzenleme:</strong> 16 Ağustos 2026
 </p>
 
 </footer>

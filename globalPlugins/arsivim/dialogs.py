@@ -61,7 +61,10 @@ class HesapDurumu:
 HESAP_DURUMU = HesapDurumu()
 AYARLAR = Ayarlar()
 BAGLANTI_BILDIRIM_GECIKMESI_MS = 150
-EKLENTI_SURUMU = "26.8.14"
+SUNUCU_ISLEMLERI_ETKIN_YENILEME_MS = 10000
+SUNUCU_ISLEMLERI_BOSTA_YENILEME_MS = 30000
+SUNUCU_ISLEMLERI_HATA_GECIKMELERI_MS = (5000, 15000, 30000)
+EKLENTI_SURUMU = "26.8.15"
 
 
 def arka_planda(calistir, tamamla):
@@ -122,9 +125,12 @@ class YuklemeYoneticisi:
 		self.dinleyiciler.discard(dinleyici)
 
 	def ekle(self, eposta, klasor, yerel_yollar):
-		self.depo.ekle(eposta, klasor, yerel_yollar)
+		sonuc = self.depo.ekle(eposta, klasor, yerel_yollar)
+		if not sonuc["eklenenler"]:
+			return sonuc
 		self.uyandirma_olayi.set()
 		self.baslat()
+		return sonuc
 
 	def baslat(self):
 		with self.kilit:
@@ -203,6 +209,27 @@ class YuklemeYoneticisi:
 	def klasordeki_durumler(self, eposta, klasor):
 		return self.depo.klasordekileri_al(eposta, klasor)
 
+	def sunucuda_gorunen_yuklemeleri_tamamla(self, eposta, klasor_dosyalari):
+		"""Başarılı eşitlemede sunucuda görünen eski işleniyor kayıtlarını uzlaştırır."""
+		try:
+			tamamlananlar = self.depo.sunucuda_gorunen_yuklemeleri_tamamla(eposta, klasor_dosyalari)
+		except Exception:
+			logHandler.log.exception("Dosya Arşivim yükleme kuyruğu sunucu listesiyle uzlaştırılamadı.")
+			return []
+		if not tamamlananlar:
+			self.baslat()
+			return []
+		tamamlanan_kimlikleri = {kayit["id"] for kayit in tamamlananlar}
+		with self.kilit:
+			if self.aktif_kayit_id in tamamlanan_kimlikleri and self.aktif_durdurma_olayi:
+				self.aktif_durdurma_olayi.set()
+			for kayit_id in tamamlanan_kimlikleri:
+				self.bildirilen_arsiv_islemleri.discard(kayit_id)
+				self.son_yuzdeler.pop(kayit_id, None)
+		self.uyandirma_olayi.set()
+		self.baslat()
+		return tamamlananlar
+
 	def _aktif_kaydi_temizle(self, kayit_id):
 		with self.kilit:
 			if self.aktif_kayit_id == kayit_id:
@@ -210,6 +237,33 @@ class YuklemeYoneticisi:
 				self.aktif_durdurma_olayi = None
 
 	def _calistir(self):
+		"""Kuyruk işçisini beklenmedik hatalardan sonra güvenli biçimde yeniden başlatır."""
+		yeniden_baslat = False
+		aktif_kayit_id = None
+		try:
+			self._calistir_dongusu()
+		except Exception:
+			logHandler.log.exception("Dosya Arşivim yükleme yöneticisi beklenmedik biçimde durdu; yeniden başlatılacak.")
+			with self.kilit:
+				aktif_kayit_id = self.aktif_kayit_id
+			if aktif_kayit_id is not None:
+				try:
+					self.depo.beklenmedik_kesintiyi_kurtar(aktif_kayit_id)
+				except Exception:
+					logHandler.log.exception("Yarım kalan Dosya Arşivim yükleme kaydı kurtarılamadı.")
+			yeniden_baslat = True
+		finally:
+			if aktif_kayit_id is not None:
+				self._aktif_kaydi_temizle(aktif_kayit_id)
+			with self.kilit:
+				if self.parcacik is threading.current_thread():
+					self.parcacik = None
+		if yeniden_baslat and not self.durduruldu and not self.duraklatildi and HESAP_DURUMU.bagli_mi:
+			self.uyandirma_olayi.clear()
+			self.uyandirma_olayi.wait(5)
+			self.baslat()
+
+	def _calistir_dongusu(self):
 		while not self.durduruldu and not self.duraklatildi and HESAP_DURUMU.bagli_mi:
 			eposta = HESAP_DURUMU.eposta
 			istem = HESAP_DURUMU.istem
@@ -269,11 +323,7 @@ class YuklemeYoneticisi:
 					self.aktif_durdurma_olayi = threading.Event()
 				if kayit["id"] not in self.bildirilen_arsiv_islemleri:
 					self.bildirilen_arsiv_islemleri.add(kayit["id"])
-					wx.CallAfter(
-						self._durum_mesaji_bildir,
-						_("Yükleme tamamlandı. Dosyanız arşivde işlenirken çalışmalarınıza devam edebilirsiniz."),
-					)
-					wx.CallAfter(self._durum_bildir, kayit)
+					wx.CallAfter(self._arsiv_isleme_bildir, kayit)
 				try:
 					gorunuyor_mu = not self.aktif_durdurma_olayi.is_set() and HESAP_DURUMU.istem.dosya_arsivde_mi(
 						eposta, kayit["klasor"], os.path.basename(kayit["yerel_yol"])
@@ -306,6 +356,7 @@ class YuklemeYoneticisi:
 					kayit["yerel_yol"],
 					lambda gonderilen, toplam: self._ilerlemeyi_bildir(kayit, gonderilen, toplam),
 					durdurma_olayi,
+					turev_uret=not AYARLAR.turev_uretimini_kapat,
 				)
 			except YuklemeDuraklatildi:
 				self.son_yuzdeler.pop(kayit["id"], None)
@@ -369,6 +420,21 @@ class YuklemeYoneticisi:
 		if self.dinleyiciler or AYARLAR.bildirimleri_goster:
 			ui.message(mesaj)
 
+	def _arsiv_isleme_bildir(self, kayit):
+		"""Aktarım bittiğinde arşiv işlemesinin arka planda süreceğini bildirir."""
+		self._durum_bildir(kayit)
+		if self.dinleyiciler or AYARLAR.bildirimleri_goster:
+			dosya_adi = os.path.basename(kayit["yerel_yol"])
+			wx.MessageBox(
+				_(
+					"{dosya} dosyasının yüklemesi tamamlandı.\n\n"
+					"Dosyanın arşivde işlenmesi, sunucu yoğunluğuna bağlı olarak zaman alabilir. "
+					"Bu sırada çalışmalarınıza devam edebilirsiniz."
+				).format(dosya=dosya_adi),
+				_("Yükleme tamamlandı"),
+				wx.OK | wx.ICON_INFORMATION,
+			)
+
 	def _ilerlemeyi_bildir(self, kayit, gonderilen, toplam):
 		if not toplam:
 			return
@@ -388,16 +454,9 @@ class YuklemeYoneticisi:
 		)
 
 	def _basari_bildir(self, kayit, dosya_adi):
-		def bildir():
-			for dinleyici in list(self.dinleyiciler):
-				dinleyici.yukleme_tamamlandi(kayit, dosya_adi)
-		if self.dinleyiciler:
-			speech.speak([
-				_("Dosya yüklendi: {dosya}").format(dosya=dosya_adi),
-				CallbackCommand(bildir, name="Dosya Arşivim yükleme bildirimi tamamlandı"),
-			])
-		elif AYARLAR.bildirimleri_goster:
-			ui.message(_("{dosya} dosyasının yüklemesi tamamlandı.").format(dosya=dosya_adi))
+		dinleyiciler = list(self.dinleyiciler)
+		for dinleyici in dinleyiciler:
+			dinleyici.yukleme_tamamlandi(kayit, dosya_adi)
 
 	def _hata_bildir(self, kayit, hata):
 		wx.MessageBox(hata, _("Dosya yükle"), wx.OK | wx.ICON_ERROR)
@@ -432,10 +491,12 @@ class DosyaArsivimPenceresi(wx.Frame):
 	KIMLIK_DOSYA_BILGILERI = wx.NewIdRef()
 	KIMLIK_SIL = wx.NewIdRef()
 	KIMLIK_BILDIRIMLER = wx.NewIdRef()
+	KIMLIK_TUREV_URETIMINI_KAPAT = wx.NewIdRef()
 	KIMLIK_TURETILMIS_DOSYALAR = wx.NewIdRef()
 	KIMLIK_YUKLEMELERI_DURAKLAT = wx.NewIdRef()
 	KIMLIK_YUKLEMELERI_IPTAL_ET = wx.NewIdRef()
 	KIMLIK_HATALI_YUKLEMELERI_YENIDEN_DENE = wx.NewIdRef()
+	KIMLIK_SUNUCU_ISLEMLERI = wx.NewIdRef()
 	KIMLIK_HAKKINDA = wx.NewIdRef()
 	KIMLIK_KULLANIM_KILAVUZU = wx.NewIdRef()
 
@@ -476,12 +537,14 @@ class DosyaArsivimPenceresi(wx.Frame):
 		hesap_menu.AppendSeparator()
 		hesap_menu.Append(self.KIMLIK_CIKIS, _("Çıkış\tAlt+F4"))
 		menu_cubugu.Append(hesap_menu, _("&Hesap"))
-		ayarlar_menu = wx.Menu()
-		ayarlar_menu.AppendCheckItem(self.KIMLIK_BILDIRIMLER, _("Bildirimleri göster"))
-		ayarlar_menu.Check(self.KIMLIK_BILDIRIMLER, AYARLAR.bildirimleri_goster)
-		ayarlar_menu.AppendCheckItem(self.KIMLIK_TURETILMIS_DOSYALAR, _("Türetilmiş dosyaları göster"))
-		ayarlar_menu.Check(self.KIMLIK_TURETILMIS_DOSYALAR, AYARLAR.turetilmis_dosyalari_goster)
-		menu_cubugu.Append(ayarlar_menu, _("&Ayarlar"))
+		self.ayarlar_menu = wx.Menu()
+		self.turetilmis_dosyalar_menu_ogesi = None
+		self.ayarlar_menu.AppendCheckItem(self.KIMLIK_BILDIRIMLER, _("Bildirimleri göster"))
+		self.ayarlar_menu.Check(self.KIMLIK_BILDIRIMLER, AYARLAR.bildirimleri_goster)
+		self.ayarlar_menu.AppendCheckItem(self.KIMLIK_TUREV_URETIMINI_KAPAT, _("Türev üretimini kapat"))
+		self.ayarlar_menu.Check(self.KIMLIK_TUREV_URETIMINI_KAPAT, AYARLAR.turev_uretimini_kapat)
+		self._turetilmis_dosyalar_menu_ogesini_guncelle()
+		menu_cubugu.Append(self.ayarlar_menu, _("&Ayarlar"))
 		yuklemeler_menu = wx.Menu()
 		self.yuklemeleri_duraklat_ogesi = yuklemeler_menu.Append(
 			self.KIMLIK_YUKLEMELERI_DURAKLAT, _("Yüklemeleri &duraklat")
@@ -491,6 +554,8 @@ class DosyaArsivimPenceresi(wx.Frame):
 			self.KIMLIK_HATALI_YUKLEMELERI_YENIDEN_DENE,
 			_("Hatalı yüklemeleri &yeniden dene"),
 		)
+		yuklemeler_menu.AppendSeparator()
+		yuklemeler_menu.Append(self.KIMLIK_SUNUCU_ISLEMLERI, _("&Sunucu işlemleri"))
 		menu_cubugu.Append(yuklemeler_menu, _("&Yüklemeler"))
 		yardim_menu = wx.Menu()
 		yardim_menu.Append(self.KIMLIK_KULLANIM_KILAVUZU, _("&Kullanım kılavuzu"))
@@ -506,6 +571,7 @@ class DosyaArsivimPenceresi(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.dosya_bilgileri_secildi, id=self.KIMLIK_DOSYA_BILGILERI)
 		self.Bind(wx.EVT_MENU, self.dosya_sil_secildi, id=self.KIMLIK_SIL)
 		self.Bind(wx.EVT_MENU, self.bildirimler_degisti, id=self.KIMLIK_BILDIRIMLER)
+		self.Bind(wx.EVT_MENU, self.turev_uretimi_degisti, id=self.KIMLIK_TUREV_URETIMINI_KAPAT)
 		self.Bind(wx.EVT_MENU, self.turetilmis_dosyalar_degisti, id=self.KIMLIK_TURETILMIS_DOSYALAR)
 		self.Bind(wx.EVT_MENU, self.yuklemeleri_duraklat_baslat_secildi, id=self.KIMLIK_YUKLEMELERI_DURAKLAT)
 		self.Bind(wx.EVT_MENU, self.yuklemeleri_iptal_et_secildi, id=self.KIMLIK_YUKLEMELERI_IPTAL_ET)
@@ -514,6 +580,7 @@ class DosyaArsivimPenceresi(wx.Frame):
 			self.hatali_yuklemeleri_yeniden_dene_secildi,
 			id=self.KIMLIK_HATALI_YUKLEMELERI_YENIDEN_DENE,
 		)
+		self.Bind(wx.EVT_MENU, self.sunucu_islemleri_secildi, id=self.KIMLIK_SUNUCU_ISLEMLERI)
 		self.Bind(wx.EVT_MENU, self.kullanim_kilavuzu_secildi, id=self.KIMLIK_KULLANIM_KILAVUZU)
 		self.Bind(wx.EVT_MENU, self.hakkinda_secildi, id=self.KIMLIK_HAKKINDA)
 
@@ -524,6 +591,32 @@ class DosyaArsivimPenceresi(wx.Frame):
 		except OSError:
 			wx.MessageBox(_("Ayarlar kaydedilemedi."), _("Ayarlar"), wx.OK | wx.ICON_ERROR, self)
 
+	def _turetilmis_dosyalar_menu_ogesini_guncelle(self):
+		"""Türev üretimi kapalıyken ilgisiz görüntüleme seçeneğini menüden kaldırır."""
+		if AYARLAR.turev_uretimini_kapat:
+			if self.turetilmis_dosyalar_menu_ogesi is not None:
+				self.ayarlar_menu.Delete(self.turetilmis_dosyalar_menu_ogesi)
+				self.turetilmis_dosyalar_menu_ogesi = None
+			return
+		if self.turetilmis_dosyalar_menu_ogesi is None:
+			self.turetilmis_dosyalar_menu_ogesi = self.ayarlar_menu.AppendCheckItem(
+				self.KIMLIK_TURETILMIS_DOSYALAR,
+				_("Türetilmiş dosyaları göster"),
+			)
+		self.ayarlar_menu.Check(self.KIMLIK_TURETILMIS_DOSYALAR, AYARLAR.turetilmis_dosyalari_goster)
+
+	def turev_uretimi_degisti(self, event):
+		AYARLAR.turev_uretimini_kapat = event.IsChecked()
+		if AYARLAR.turev_uretimini_kapat:
+			AYARLAR.turetilmis_dosyalari_goster = False
+		try:
+			AYARLAR.kaydet()
+		except OSError:
+			wx.MessageBox(_("Ayarlar kaydedilemedi."), _("Ayarlar"), wx.OK | wx.ICON_ERROR, self)
+			return
+		self._turetilmis_dosyalar_menu_ogesini_guncelle()
+		self._turetilmis_dosya_gorunumunu_yenile()
+
 	def turetilmis_dosyalar_degisti(self, event):
 		AYARLAR.turetilmis_dosyalari_goster = event.IsChecked()
 		try:
@@ -531,6 +624,9 @@ class DosyaArsivimPenceresi(wx.Frame):
 		except OSError:
 			wx.MessageBox(_("Ayarlar kaydedilemedi."), _("Ayarlar"), wx.OK | wx.ICON_ERROR, self)
 			return
+		self._turetilmis_dosya_gorunumunu_yenile()
+
+	def _turetilmis_dosya_gorunumunu_yenile(self):
 		if self.aktif_klasor and self.onbellek:
 			try:
 				self.klasor_dosyalari[self.aktif_klasor] = self.onbellek.klasordeki_dosyalari_al(
@@ -585,6 +681,15 @@ class DosyaArsivimPenceresi(wx.Frame):
 			)
 			return
 		self.arayuzu_yenile()
+
+	def sunucu_islemleri_secildi(self, event):
+		if not HESAP_DURUMU.bagli_mi:
+			return
+		pencere = SunucuIslemleriPenceresi(self)
+		try:
+			pencere.ShowModal()
+		finally:
+			pencere.Destroy()
 
 	def kullanim_kilavuzu_secildi(self, event):
 		eklenti = addonHandler.getCodeAddon()
@@ -815,6 +920,7 @@ class DosyaArsivimPenceresi(wx.Frame):
 			self.onbellek = None
 			self.esitleme_hata_gosterilsin = False
 			return
+		YUKLEME_YONETICISI.sunucuda_gorunen_yuklemeleri_tamamla(eposta, klasor_dosyalari)
 		self.esitleme_hata_gosterilsin = False
 		if turetilmisleri_goster != AYARLAR.turetilmis_dosyalari_goster:
 			self._esitlemeyi_baslat()
@@ -835,14 +941,14 @@ class DosyaArsivimPenceresi(wx.Frame):
 		"""Dosya listesinin sağ tık ve klavye içerik menüsünü açar."""
 		if not self.aktif_klasor:
 			return
+		bilgi = self._secili_dosya_bilgisi()
+		dosya_mi = bilgi is not None
 		menu = wx.Menu()
 		menu.Append(self.KIMLIK_DOSYA_YUKLE, _("Dosya &yükle\tAlt+Y"))
 		menu.Append(self.KIMLIK_INDIR, _("&İndir\tAlt+İ"))
-		menu.Append(self.KIMLIK_BAGLANTI_KOPYALA, _("&Bağlantıyı panoya kopyala\tAlt+B"))
+		menu.Append(self.KIMLIK_BAGLANTI_KOPYALA, _("&Bağlantıyı kopyala\tAlt+B"))
 		menu.Append(self.KIMLIK_DOSYA_BILGILERI, _("&Dosya bilgileri\tAlt+D"))
 		menu.Append(self.KIMLIK_SIL, _("&Sil\tAlt+S"))
-		secili_oge = self.dosya_listesi.GetStringSelection()
-		dosya_mi = secili_oge in self.gorunen_dosyalar
 		menu.Enable(self.KIMLIK_INDIR, dosya_mi)
 		menu.Enable(self.KIMLIK_BAGLANTI_KOPYALA, dosya_mi)
 		menu.Enable(self.KIMLIK_DOSYA_BILGILERI, dosya_mi)
@@ -875,7 +981,12 @@ class DosyaArsivimPenceresi(wx.Frame):
 		bilgi = self._secili_dosya_bilgisi()
 		if not bilgi or not self.aktif_klasor:
 			return
-		baglanti = HESAP_DURUMU.istem.dosya_baglantisi(HESAP_DURUMU.eposta, self.aktif_klasor, bilgi["ad"])
+		baglanti = HESAP_DURUMU.istem.dosya_baglantisi(
+			HESAP_DURUMU.eposta, self.aktif_klasor, bilgi["ad"]
+		)
+		self._baglantiyi_panoya_kopyala(baglanti)
+
+	def _baglantiyi_panoya_kopyala(self, baglanti):
 		if not wx.TheClipboard.Open():
 			wx.MessageBox(_("Panoya erişilemedi."), _("Bağlantıyı panoya kopyala"), wx.OK | wx.ICON_ERROR, self)
 			return
@@ -889,13 +1000,15 @@ class DosyaArsivimPenceresi(wx.Frame):
 		bilgi = self._secili_dosya_bilgisi()
 		if not bilgi or not self.aktif_klasor:
 			return
-		baglanti = HESAP_DURUMU.istem.dosya_baglantisi(HESAP_DURUMU.eposta, self.aktif_klasor, bilgi["ad"])
-		metin = "\n".join((
+		baglanti = HESAP_DURUMU.istem.dosya_baglantisi(
+			HESAP_DURUMU.eposta, self.aktif_klasor, bilgi["ad"]
+		)
+		metin = "\n".join([
 			_("Ad: {ad}").format(ad=bilgi["ad"]),
 			_("Tür: {tur}").format(tur=self._dosya_turunu_belirle(bilgi)),
 			_("Boyut: {boyut}").format(boyut=self._dosya_boyutunu_bicimlendir(bilgi.get("boyut"))),
 			_("Bağlantı: {bağlantı}").format(bağlantı=baglanti),
-		))
+		])
 		pencere = DosyaBilgileriPenceresi(self, metin)
 		pencere.ShowModal()
 		pencere.Destroy()
@@ -906,7 +1019,12 @@ class DosyaArsivimPenceresi(wx.Frame):
 			return
 		dosya_adi = bilgi["ad"]
 		onay = wx.MessageBox(
-			_("{dosya} adlı dosyayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.").format(dosya=dosya_adi),
+			_(
+				"{dosya} adlı dosyayı silmek istediğinizden emin misiniz?\n\n"
+				"Bu işlem geri alınamaz. Silme isteği sunucuya iletilecektir. "
+				"Dosyanın sunucudan kaldırılması, sunucu yoğunluğuna bağlı olarak zaman alabilir; "
+				"bu sırada çalışmalarınıza devam edebilirsiniz."
+			).format(dosya=dosya_adi),
 			_("Dosyayı sil"),
 			wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
 			self,
@@ -919,7 +1037,9 @@ class DosyaArsivimPenceresi(wx.Frame):
 		islem_id = None
 		if self.onbellek:
 			try:
-				islem_id = self.onbellek.silmeyi_baslat(eposta, klasor, dosya_adi)
+				islem_id, yeni_islem = self.onbellek.silmeyi_baslat_ve_durumu_al(
+					eposta, klasor, dosya_adi
+				)
 			except (OSError, sqlite3.Error):
 				self.onbellek = None
 			else:
@@ -928,6 +1048,9 @@ class DosyaArsivimPenceresi(wx.Frame):
 				)
 				self.arayuzu_yenile()
 				self.dosya_listesi.SetFocus()
+				if not yeni_islem:
+					ui.message(_("{dosya} için silme işlemi zaten devam ediyor.").format(dosya=dosya_adi))
+					return
 		arka_planda(
 			lambda: istem.dosya_sil(eposta, klasor, dosya_adi),
 			lambda sonuc, hata: self._dosya_silindi(eposta, islem_id, klasor, dosya_adi, hata),
@@ -1078,9 +1201,16 @@ class DosyaArsivimPenceresi(wx.Frame):
 		self.dosya_yuklemeyi_baslat(dosyalar)
 
 	def dosya_yuklemeyi_baslat(self, yerel_yollar):
-		YUKLEME_YONETICISI.ekle(HESAP_DURUMU.eposta, self.aktif_klasor, yerel_yollar)
+		sonuc = YUKLEME_YONETICISI.ekle(HESAP_DURUMU.eposta, self.aktif_klasor, yerel_yollar)
 		self.arayuzu_yenile()
 		self.dosya_listesi.SetFocus()
+		if sonuc["yinelenenler"]:
+			dosya_adlari = ", ".join(os.path.basename(yol) for yol in sonuc["yinelenenler"])
+			ui.message(
+				_("Zaten yükleme kuyruğunda bulunan dosyalar yeniden eklenmedi: {dosyalar}").format(
+					dosyalar=dosya_adlari
+				)
+			)
 
 	def yukleme_tamamlandi(self, kayit, dosya_adi):
 		klasor = kayit["klasor"]
@@ -1150,6 +1280,7 @@ class DosyaArsivimPenceresi(wx.Frame):
 		self.GetMenuBar().Enable(self.KIMLIK_YUKLEMELERI_DURAKLAT, HESAP_DURUMU.bagli_mi)
 		self.GetMenuBar().Enable(self.KIMLIK_YUKLEMELERI_IPTAL_ET, HESAP_DURUMU.bagli_mi)
 		self.GetMenuBar().Enable(self.KIMLIK_HATALI_YUKLEMELERI_YENIDEN_DENE, HESAP_DURUMU.bagli_mi)
+		self.GetMenuBar().Enable(self.KIMLIK_SUNUCU_ISLEMLERI, HESAP_DURUMU.bagli_mi)
 		self.dosya_listesi.Clear()
 		self.gorunen_dosyalar = {}
 		self.dosya_ayrinti_indeksi = 0
@@ -1266,6 +1397,227 @@ class DosyaArsivimPenceresi(wx.Frame):
 			return
 		self.kapatildi = True
 		YUKLEME_YONETICISI.dinleyici_cikar(self)
+
+
+class SunucuIslemleriPenceresi(wx.Dialog):
+	"""Archive.org görevlerini erişilebilir biçimde gösterir ve hata görevlerini güvenle yineler."""
+
+	def __init__(self, parent):
+		super().__init__(parent, title=_("Sunucu işlemleri"), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		self.gorevler = []
+		self.istek_devam_ediyor = False
+		self.kapatildi = False
+		self.ardisik_hata_sayisi = 0
+		self.yenileme_zamanlayicisi = None
+		self.yeniden_calistirilan_gorevler = set()
+
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		self.ozet_metni = wx.StaticText(self, label=_("Sunucu işlem bilgileri alınıyor."))
+		sizer.Add(self.ozet_metni, 0, wx.EXPAND | wx.ALL, 8)
+		self.gorev_listesi = wx.ListBox(self)
+		self.gorev_listesi.Append(_("Sunucu işlem bilgileri alınıyor."))
+		self.gorev_listesi.SetSelection(0)
+		sizer.Add(self.gorev_listesi, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
+
+		dugmeler = wx.BoxSizer(wx.HORIZONTAL)
+		self.yenile_dugmesi = wx.Button(self, label=_("&Yenile"))
+		self.yeniden_dene_dugmesi = wx.Button(self, label=_("Hatalı görevi &yeniden çalıştır"))
+		self.kapat_dugmesi = wx.Button(self, wx.ID_CLOSE, _("&Kapat"))
+		for dugme in (self.yenile_dugmesi, self.yeniden_dene_dugmesi, self.kapat_dugmesi):
+			dugmeler.Add(dugme, 0, wx.ALL, 5)
+		sizer.Add(dugmeler, 0, wx.ALIGN_CENTER | wx.BOTTOM, 5)
+		self.SetSizer(sizer)
+		self.SetSize((620, 360))
+		self.SetMinSize((520, 280))
+		self.CentreOnParent()
+		self.SetEscapeId(wx.ID_CLOSE)
+
+		self.gorev_listesi.Bind(wx.EVT_LISTBOX, self._secim_degisti)
+		self.yenile_dugmesi.Bind(wx.EVT_BUTTON, lambda event: self.yenilemeyi_baslat(manuel=True))
+		self.yeniden_dene_dugmesi.Bind(wx.EVT_BUTTON, self._gorevi_yeniden_calistir)
+		self.kapat_dugmesi.Bind(wx.EVT_BUTTON, self.kapat)
+		self.Bind(wx.EVT_CLOSE, self.kapat)
+		self._dugmeleri_guncelle()
+		self.gorev_listesi.SetFocus()
+		wx.CallAfter(self.yenilemeyi_baslat)
+
+	def _zamanlayiciyi_durdur(self):
+		zamanlayici = self.yenileme_zamanlayicisi
+		self.yenileme_zamanlayicisi = None
+		if zamanlayici is not None:
+			try:
+				zamanlayici.Stop()
+			except RuntimeError:
+				pass
+
+	def _yenilemeyi_zamanla(self, gecikme_ms):
+		if self.kapatildi:
+			return
+		self._zamanlayiciyi_durdur()
+		self.yenileme_zamanlayicisi = wx.CallLater(gecikme_ms, self.yenilemeyi_baslat)
+
+	def yenilemeyi_baslat(self, manuel=False):
+		if self.kapatildi or self.istek_devam_ediyor or not HESAP_DURUMU.bagli_mi:
+			return
+		self._zamanlayiciyi_durdur()
+		if manuel:
+			self.ardisik_hata_sayisi = 0
+		self.istek_devam_ediyor = True
+		self.ozet_metni.SetLabel(_("Sunucu işlem bilgileri alınıyor."))
+		self._dugmeleri_guncelle()
+		arka_planda(
+			lambda: HESAP_DURUMU.istem.gorev_durumlarini_al(HESAP_DURUMU.eposta),
+			self._yenileme_tamamlandi,
+		)
+
+	def _yenileme_tamamlandi(self, sonuc, hata):
+		if self.kapatildi:
+			return
+		self.istek_devam_ediyor = False
+		if hata:
+			self.ardisik_hata_sayisi += 1
+			if self.ardisik_hata_sayisi <= len(SUNUCU_ISLEMLERI_HATA_GECIKMELERI_MS):
+				gecikme = SUNUCU_ISLEMLERI_HATA_GECIKMELERI_MS[self.ardisik_hata_sayisi - 1]
+				self.ozet_metni.SetLabel(
+					_("Sunucu bilgileri alınamadı. Otomatik olarak yeniden denenecek.")
+				)
+				self._yenilemeyi_zamanla(gecikme)
+			else:
+				self.ozet_metni.SetLabel(
+					_("Sunucu bilgileri alınamadı. Otomatik yenileme durduruldu; Yenile düğmesini kullanabilirsiniz.")
+				)
+			self._dugmeleri_guncelle()
+			self.Layout()
+			return
+		self.ardisik_hata_sayisi = 0
+		self._gorevleri_goster(sonuc)
+		etkin_sayi = sum(sonuc["ozet"].values())
+		gecikme = SUNUCU_ISLEMLERI_ETKIN_YENILEME_MS if etkin_sayi else SUNUCU_ISLEMLERI_BOSTA_YENILEME_MS
+		self._yenilemeyi_zamanla(gecikme)
+
+	@staticmethod
+	def _durum_etiketi(durum):
+		return {
+			"queued": _("Kuyrukta"),
+			"running": _("Çalışıyor"),
+			"error": _("Hata"),
+			"paused": _("Duraklatıldı"),
+			"unknown": _("Bilinmeyen"),
+		}.get(durum, _("Bilinmeyen"))
+
+	@staticmethod
+	def _komut_etiketi(komut):
+		return {
+			"archive.php": _("Arşivleme"),
+			"derive.php": _("Türev üretimi"),
+			"modify_xml.php": _("Arşiv bilgilerini güncelleme"),
+			"bup.php": _("Yedekleme"),
+		}.get(komut, _("Sunucu görevi: {komut}").format(komut=komut))
+
+	def _gorevleri_goster(self, sonuc):
+		secili_id = None
+		secim = self.gorev_listesi.GetSelection()
+		if 0 <= secim < len(self.gorevler):
+			secili_id = self.gorevler[secim]["id"]
+		self.gorevler = list(sonuc["gorevler"])
+		ozet = sonuc["ozet"]
+		self.ozet_metni.SetLabel(
+			_("Kuyrukta: {kuyrukta}; Çalışıyor: {calisiyor}; Hata: {hata}; Duraklatıldı: {duraklatildi}").format(
+				kuyrukta=ozet["queued"],
+				calisiyor=ozet["running"],
+				hata=ozet["error"],
+				duraklatildi=ozet["paused"],
+			)
+		)
+		self.gorev_listesi.Clear()
+		secilecek_indeks = 0
+		for indeks, gorev in enumerate(self.gorevler):
+			self.gorev_listesi.Append(
+				_("Görev {kimlik}: {islem}; durum: {durum}").format(
+					kimlik=gorev["id"],
+					islem=self._komut_etiketi(gorev["komut"]),
+					durum=self._durum_etiketi(gorev["durum"]),
+				)
+			)
+			if gorev["id"] == secili_id:
+				secilecek_indeks = indeks
+		if not self.gorevler:
+			self.gorev_listesi.Append(_("Etkin sunucu işlemi bulunmuyor."))
+		self.gorev_listesi.SetSelection(secilecek_indeks)
+		self._dugmeleri_guncelle()
+		self.Layout()
+
+	def _secili_gorev(self):
+		secim = self.gorev_listesi.GetSelection()
+		if 0 <= secim < len(self.gorevler):
+			return self.gorevler[secim]
+		return None
+
+	def _secim_degisti(self, event):
+		self._dugmeleri_guncelle()
+		event.Skip()
+
+	def _dugmeleri_guncelle(self):
+		gorev = self._secili_gorev()
+		yeniden_calistirilabilir = bool(
+			gorev
+			and gorev.get("durum") == "error"
+			and gorev["id"] not in self.yeniden_calistirilan_gorevler
+		)
+		self.yenile_dugmesi.Enable(not self.istek_devam_ediyor)
+		self.yeniden_dene_dugmesi.Enable(not self.istek_devam_ediyor and yeniden_calistirilabilir)
+
+	def _gorevi_yeniden_calistir(self, event):
+		gorev = self._secili_gorev()
+		if (
+			not gorev
+			or gorev.get("durum") != "error"
+			or gorev["id"] in self.yeniden_calistirilan_gorevler
+			or self.istek_devam_ediyor
+		):
+			return
+		onay = wx.MessageBox(
+			_("{kimlik} numaralı hata görevini yeniden çalıştırmak istiyor musunuz?").format(kimlik=gorev["id"]),
+			_("Görevi yeniden çalıştır"),
+			wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION,
+			self,
+		)
+		if onay != wx.YES:
+			return
+		self._zamanlayiciyi_durdur()
+		self.yeniden_calistirilan_gorevler.add(gorev["id"])
+		self.istek_devam_ediyor = True
+		self.ozet_metni.SetLabel(_("Sunucu görevi yeniden çalıştırılıyor."))
+		self._dugmeleri_guncelle()
+		arka_planda(
+			lambda: HESAP_DURUMU.istem.gorevi_yeniden_calistir(gorev["id"]),
+			lambda sonuc, hata: self._gorevi_yeniden_calistirma_tamamlandi(gorev["id"], hata),
+		)
+
+	def _gorevi_yeniden_calistirma_tamamlandi(self, gorev_id, hata):
+		if self.kapatildi:
+			return
+		self.istek_devam_ediyor = False
+		if hata:
+			self.ozet_metni.SetLabel(hata)
+			ui.message(hata)
+			self._yenilemeyi_zamanla(SUNUCU_ISLEMLERI_ETKIN_YENILEME_MS)
+			self._dugmeleri_guncelle()
+			return
+		ui.message(_("{kimlik} numaralı sunucu görevi yeniden çalıştırıldı.").format(kimlik=gorev_id))
+		self.ozet_metni.SetLabel(_("Sunucu görevi yeniden çalıştırıldı; durum bilgisi yenilenecek."))
+		self._yenilemeyi_zamanla(1000)
+		self._dugmeleri_guncelle()
+
+	def kapat(self, event):
+		if self.kapatildi:
+			return
+		self.kapatildi = True
+		self._zamanlayiciyi_durdur()
+		if self.IsModal():
+			self.EndModal(wx.ID_CLOSE)
+		else:
+			self.Destroy()
 
 
 class BaglantiSecimPenceresi(wx.Dialog):

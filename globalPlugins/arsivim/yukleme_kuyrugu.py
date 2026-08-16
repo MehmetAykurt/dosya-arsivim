@@ -68,15 +68,39 @@ class YuklemeKuyrugu:
 
 	def ekle(self, eposta, klasor, yerel_yollar):
 		with self.kilit:
+			mevcut_hedefler = {
+				self._uzak_hedef_anahtari(kayit["eposta"], kayit["klasor"], kayit["yerel_yol"])
+				for kayit in self.kayitlar
+			}
+			eklenenler = []
+			yinelenenler = []
 			for yerel_yol in yerel_yollar:
+				yerel_yol = os.fspath(yerel_yol)
+				hedef = self._uzak_hedef_anahtari(eposta, klasor, yerel_yol)
+				if hedef in mevcut_hedefler:
+					yinelenenler.append(yerel_yol)
+					continue
 				self.kayitlar.append({
 					"id": uuid.uuid4().hex,
 					"eposta": eposta,
 					"klasor": klasor,
-					"yerel_yol": os.fspath(yerel_yol),
+					"yerel_yol": yerel_yol,
 					"durum": "bekliyor",
 				})
-			self._kaydet()
+				mevcut_hedefler.add(hedef)
+				eklenenler.append(yerel_yol)
+			if eklenenler:
+				self._kaydet()
+		return {"eklenenler": eklenenler, "yinelenenler": yinelenenler}
+
+	@staticmethod
+	def _uzak_hedef_anahtari(eposta, klasor, yerel_yol):
+		"""Windows'ta aynı uzak dosyaya karşılık gelen yollar için kararlı anahtar üretir."""
+		return (
+			eposta.strip().casefold(),
+			klasor.casefold(),
+			os.path.basename(os.fspath(yerel_yol)).casefold(),
+		)
 
 	def siradakini_al(self, eposta):
 		with self.kilit:
@@ -113,6 +137,36 @@ class YuklemeKuyrugu:
 		with self.kilit:
 			self.kayitlar = [kayit for kayit in self.kayitlar if kayit["id"] != kayit_id]
 			self._kaydet()
+
+	def sunucuda_gorunen_yuklemeleri_tamamla(self, eposta, klasor_dosyalari):
+		"""Sunucuda özgün dosyası görünen arşivleniyor kayıtlarını güvenle tamamlar."""
+		sunucudaki_ozgun_dosyalar = {
+			(klasor, dosya.get("ad"))
+			for klasor, dosyalar in klasor_dosyalari.items()
+			for dosya in dosyalar
+			if dosya.get("kaynak", "original") == "original" and isinstance(dosya.get("ad"), str)
+		}
+		with self.kilit:
+			tamamlananlar = [
+				dict(kayit)
+				for kayit in self.kayitlar
+				if (
+					kayit["eposta"] == eposta
+					and kayit["durum"] == "arşivleniyor"
+					and (kayit["klasor"], os.path.basename(kayit["yerel_yol"])) in sunucudaki_ozgun_dosyalar
+				)
+			]
+			if not tamamlananlar:
+				return []
+			tamamlanan_kimlikleri = {kayit["id"] for kayit in tamamlananlar}
+			eski_kayitlar = self.kayitlar
+			self.kayitlar = [kayit for kayit in self.kayitlar if kayit["id"] not in tamamlanan_kimlikleri]
+			try:
+				self._kaydet()
+			except Exception:
+				self.kayitlar = eski_kayitlar
+				raise
+		return tamamlananlar
 
 	def iptal_dogrulaniyor(self, kayit_id):
 		"""Sunucu silme isteği kabul edilen kaydı doğrulama aşamasına geçirir."""
@@ -155,6 +209,24 @@ class YuklemeKuyrugu:
 					kayit.pop("yuzde", None)
 					break
 			self._kaydet()
+
+	def beklenmedik_kesintiyi_kurtar(self, kayit_id):
+		"""Çöken işçinin yarım bıraktığı etkin aktarımı güvenli biçimde yeniden sıraya alır."""
+		with self.kilit:
+			for kayit in self.kayitlar:
+				if kayit["id"] != kayit_id or kayit["durum"] != "yükleniyor":
+					continue
+				eski_kayit = dict(kayit)
+				kayit["durum"] = "bekliyor"
+				kayit.pop("yuzde", None)
+				try:
+					self._kaydet()
+				except Exception:
+					kayit.clear()
+					kayit.update(eski_kayit)
+					raise
+				return True
+		return False
 
 	def epostadakileri_iptal_et(self, eposta):
 		"""Bekleyenleri kaldırır; sunucuya ulaşanları kalıcı iptal durumunda tutar."""

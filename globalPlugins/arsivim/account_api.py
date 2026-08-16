@@ -45,6 +45,7 @@ OTP_PATH = "/services/account/otp/"
 KAYIT_PATH = "/services/account/signup/"
 S3_ANAHTAR_SAYFASI = "/account/s3.php"
 S3_ADRESI = "https://s3.us.archive.org"
+GOREVLER_PATH = "/services/tasks.php"
 ANA_OGE_ON_EKI = "dosya-arsivim-"
 KLASOR_DIZINI_DOSYASI = ".dosya_arsivim_klasorler.json"
 VARSAYILAN_KLASORLER = (
@@ -59,6 +60,26 @@ VARSAYILAN_KLASORLER = (
 )
 S3_GECICI_HTTP_KODLARI = frozenset((429, 500, 502, 503, 504))
 S3_YENIDEN_DENEME_GECIKMELERI = (2, 5)
+S3_YOGUNLUK_KONTROL_ZAMAN_ASIMI = 15
+GOREV_API_YANIT_SINIRI = 1024 * 1024
+GOREV_API_GECICI_HTTP_KODLARI = frozenset((429, 500, 502, 503, 504))
+GOREV_API_YENIDEN_DENEME_GECIKMELERI = (2, 5)
+GOREV_DURUM_KODLARI = {
+	0: "queued",
+	1: "running",
+	2: "error",
+	9: "paused",
+}
+GOREV_DURUM_ADLARI = {
+	"queued": "queued",
+	"green": "queued",
+	"running": "running",
+	"blue": "running",
+	"error": "error",
+	"red": "error",
+	"paused": "paused",
+	"brown": "paused",
+}
 
 
 class HesapHatasi(Exception):
@@ -261,7 +282,7 @@ class HesapIstemi:
 		govde = None
 		basliklar = {
 			"Accept": "application/json",
-			"User-Agent": "DosyaArsivimNVDA/26.8.14",
+			"User-Agent": "DosyaArsivimNVDA/26.8.15",
 		}
 		if veri is not None:
 			govde = json.dumps(veri).encode("utf-8")
@@ -402,9 +423,34 @@ class HesapIstemi:
 	@staticmethod
 	def _s3_kullanici_hatasi(hata_metni, http_kodu, servis_kodu=None):
 		ayrinti = f"HTTP {http_kodu}"
-		if servis_kodu:
+		if isinstance(servis_kodu, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", servis_kodu):
 			ayrinti += f", {servis_kodu}"
 		return _("{mesaj} ({ayrinti})").format(mesaj=hata_metni, ayrinti=ayrinti)
+
+	def _s3_kullanim_siniri_asildi_mi(self, oge_kimligi):
+		"""IA'nın belgelenmiş sınır denetimini yapar; belirsizlikte gerçek isteği engellemez."""
+		sorgu = urllib.parse.urlencode({
+			"check_limit": "1",
+			"accesskey": self.s3_anahtari,
+			"bucket": oge_kimligi,
+		})
+		try:
+			with self.acici.open(
+				urllib.request.Request(f"{S3_ADRESI}/?{sorgu}"),
+				timeout=S3_YOGUNLUK_KONTROL_ZAMAN_ASIMI,
+			) as yanit:
+				sonuc = json.loads(yanit.read().decode("utf-8"))
+		except (urllib.error.URLError, OSError, TypeError, ValueError):
+			logHandler.log.warning("Dosya Arşivim IA-S3 yoğunluk denetimi alınamadı; gerçek istek denenecek.")
+			return None
+		if not isinstance(sonuc, dict):
+			return None
+		deger = sonuc.get("over_limit")
+		if deger in (0, "0", False):
+			return False
+		if deger in (1, "1", True):
+			return True
+		return None
 
 	def _s3_istegi(self, oge_kimligi, dosya_adi, method, veri=None, yeni_oge=False, ek_basliklar=None, hata_metni=None):
 		"""IA-S3 ile ana ögedeki tek bir dosya üzerinde işlem yapar."""
@@ -421,11 +467,26 @@ class HesapIstemi:
 			})
 		if ek_basliklar:
 			basliklar.update(ek_basliklar)
+		yazma_istegi = method in ("PUT", "DELETE")
+		if yazma_istegi:
+			# IA aynı öğede öncelikli ve önceliksiz işlemlerin karıştırılmamasını ister.
+			basliklar["x-archive-interactive-priority"] = "1"
 		varsayilan_hata = hata_metni or _("Varsayılan klasörler oluşturulamadı.")
 		gecikmeler = (0,) + S3_YENIDEN_DENEME_GECIKMELERI
 		for deneme, gecikme in enumerate(gecikmeler):
 			if gecikme:
 				time.sleep(gecikme)
+			if yazma_istegi and self._s3_kullanim_siniri_asildi_mi(oge_kimligi):
+				logHandler.log.warning(
+					"Dosya Arşivim IA-S3 yazma isteği sunucu yoğunluğu nedeniyle ertelendi: yöntem=%s, deneme=%s",
+					method,
+					deneme + 1,
+				)
+				if deneme + 1 < len(gecikmeler):
+					continue
+				raise HesapHatasi(
+					_("Archive.org sunucusu şu anda yoğun. Lütfen işlemi daha sonra yeniden deneyin.")
+				)
 			if veri is not None and hasattr(veri, "seek"):
 				veri.seek(0)
 			istek = urllib.request.Request(url, data=veri, headers=basliklar, method=method)
@@ -435,13 +496,12 @@ class HesapIstemi:
 			except urllib.error.HTTPError as hata:
 				if hata.code == 404 and method in ("HEAD", "DELETE"):
 					return None
-				servis_kodu, servis_mesaji = self._s3_hata_ayrintisi(hata)
+				servis_kodu, _servis_mesaji = self._s3_hata_ayrintisi(hata)
 				logHandler.log.warning(
-					"Dosya Arşivim IA-S3 isteği başarısız: yöntem=%s, HTTP=%s, kod=%s, ileti=%s, deneme=%s",
+					"Dosya Arşivim IA-S3 isteği başarısız: yöntem=%s, HTTP=%s, kod=%s, deneme=%s",
 					method,
 					hata.code,
-					servis_kodu or "bilinmiyor",
-					servis_mesaji or hata.reason,
+					servis_kodu if isinstance(servis_kodu, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", servis_kodu) else "bilinmiyor",
 					deneme + 1,
 				)
 				if hata.code in S3_GECICI_HTTP_KODLARI and deneme + 1 < len(gecikmeler):
@@ -472,7 +532,15 @@ class HesapIstemi:
 		).encode("utf-8")
 		self._s3_istegi(oge_kimligi, KLASOR_DIZINI_DOSYASI, "PUT", veri, yeni_oge=True)
 
-	def dosya_yukle(self, eposta, klasor, yerel_yol, ilerleme_bildir=None, durdurma_olayi=None):
+	def dosya_yukle(
+		self,
+		eposta,
+		klasor,
+		yerel_yol,
+		ilerleme_bildir=None,
+		durdurma_olayi=None,
+		turev_uret=True,
+	):
 		"""Yerel dosyayı seçili klasör yoluyla ana arşiv ögesine yükler."""
 		if not os.path.isfile(yerel_yol):
 			raise HesapHatasi(_("Seçilen dosya bulunamadı."))
@@ -484,12 +552,15 @@ class HesapIstemi:
 			with open(yerel_yol, "rb") as dosya:
 				boyut = os.path.getsize(yerel_yol)
 				veri = _IlerlemeliDosya(dosya, boyut, ilerleme_bildir, durdurma_olayi)
+				basliklar = {"Content-Length": str(boyut)}
+				if not turev_uret:
+					basliklar["x-archive-queue-derive"] = "0"
 				self._s3_istegi(
 					oge_kimligi,
 					uzak_yol,
 					"PUT",
 					veri,
-					ek_basliklar={"Content-Length": str(boyut)},
+					ek_basliklar=basliklar,
 					hata_metni=_("Dosya yüklenemedi."),
 				)
 		except OSError:
@@ -508,10 +579,166 @@ class HesapIstemi:
 			hata_metni=_("Dosya silinemedi."),
 		)
 
+	@staticmethod
+	def _gorev_durumunu_coz(gorev):
+		"""Tasks API durumunu yalnızca belgelenmiş dört sabit duruma indirger."""
+		try:
+			kod = int(gorev.get("wait_admin"))
+		except (TypeError, ValueError):
+			kod = None
+		if kod in GOREV_DURUM_KODLARI:
+			return GOREV_DURUM_KODLARI[kod]
+		for alan in ("status", "color"):
+			deger = gorev.get(alan)
+			if isinstance(deger, str):
+				durum = GOREV_DURUM_ADLARI.get(deger.strip().casefold())
+				if durum:
+					return durum
+		return "unknown"
+
+	@staticmethod
+	def _guvenli_gorev_sayisi(deger):
+		try:
+			deger = int(deger)
+		except (TypeError, ValueError):
+			return 0
+		return min(max(deger, 0), 1000000)
+
+	@classmethod
+	def _gorevi_guvenli_hale_getir(cls, gorev):
+		"""Sunucu, kullanıcı ve istek ayrıntılarını atarak yalnızca arayüz için gereken alanları bırakır."""
+		if not isinstance(gorev, dict):
+			return None
+		gorev_id = gorev.get("task_id", gorev.get("id"))
+		try:
+			gorev_id = int(gorev_id)
+		except (TypeError, ValueError):
+			return None
+		if gorev_id < 1:
+			return None
+		komut = gorev.get("cmd")
+		if not isinstance(komut, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", komut):
+			komut = "unknown"
+		durum = cls._gorev_durumunu_coz(gorev)
+		try:
+			oncelik = int(gorev.get("priority"))
+		except (TypeError, ValueError):
+			oncelik = None
+		if oncelik is not None and not -10 <= oncelik <= 10:
+			oncelik = None
+		return {
+			"id": gorev_id,
+			"komut": komut,
+			"durum": durum,
+			"oncelik": oncelik,
+			"yeniden_calistirilabilir": durum == "error",
+		}
+
+	def gorev_durumlarini_al(self, eposta):
+		"""Ana arşiv öğesinin etkin görevlerini güvenli ve kararlı bir veri yapısında döndürür."""
+		self._s3_anahtarlarini_al_veya_olustur()
+		sorgu = urllib.parse.urlencode({
+			"identifier": self.ana_oge_kimligi(eposta),
+			"catalog": "1",
+			"summary": "1",
+			"history": "0",
+			"limit": "100",
+		})
+		istek = urllib.request.Request(
+			f"{SUNUCU_ADRESI}{GOREVLER_PATH}?{sorgu}",
+			headers={"Authorization": f"LOW {self.s3_anahtari}:{self.s3_gizli_anahtari}"},
+		)
+		sonuc = self._gorev_api_json_istegi(
+			istek,
+			_("Sunucu işlem durumları alınamadı."),
+			yeniden_dene=False,
+		)
+		deger = sonuc.get("value")
+		if not isinstance(deger, dict):
+			raise HesapHatasi(_("Sunucu işlem durumları alınamadı."))
+		ozet_girdisi = deger.get("summary") if isinstance(deger.get("summary"), dict) else {}
+		ozet = {
+			durum: self._guvenli_gorev_sayisi(ozet_girdisi.get(durum))
+			for durum in ("queued", "running", "error", "paused")
+		}
+		katalog = deger.get("catalog")
+		if isinstance(katalog, dict):
+			katalog = list(katalog.values())
+		if not isinstance(katalog, list):
+			katalog = []
+		gorevler = []
+		for gorev in katalog:
+			guvenli_gorev = self._gorevi_guvenli_hale_getir(gorev)
+			if guvenli_gorev is not None:
+				gorevler.append(guvenli_gorev)
+		return {"ozet": ozet, "gorevler": gorevler}
+
+	def _gorev_api_json_istegi(self, istek, hata_metni, yeniden_dene=True):
+		"""Tasks API isteğini geçici hatalarda sınırlı sayıda dener ve yalnızca doğrulanmış JSON döndürür."""
+		gecikmeler = (0,) + GOREV_API_YENIDEN_DENEME_GECIKMELERI if yeniden_dene else (0,)
+		for deneme, gecikme in enumerate(gecikmeler):
+			if gecikme:
+				time.sleep(gecikme)
+			try:
+				with self.acici.open(istek, timeout=30) as yanit:
+					govde = yanit.read(GOREV_API_YANIT_SINIRI + 1)
+			except urllib.error.HTTPError as hata:
+				logHandler.log.warning(
+					"Dosya Arşivim görev API isteği başarısız: yöntem=%s, HTTP=%s, deneme=%s",
+					istek.get_method(), hata.code, deneme + 1,
+				)
+				if hata.code in GOREV_API_GECICI_HTTP_KODLARI and deneme + 1 < len(gecikmeler):
+					continue
+				raise HesapHatasi(_("{mesaj} (HTTP {kod})").format(mesaj=hata_metni, kod=hata.code))
+			except (urllib.error.URLError, OSError):
+				logHandler.log.warning(
+					"Dosya Arşivim görev API bağlantı hatası: yöntem=%s, deneme=%s",
+					istek.get_method(), deneme + 1,
+				)
+				if deneme + 1 < len(gecikmeler):
+					continue
+				raise HesapHatasi(hata_metni)
+			if len(govde) > GOREV_API_YANIT_SINIRI:
+				raise HesapHatasi(hata_metni)
+			try:
+				sonuc = json.loads(govde.decode("utf-8"))
+			except (UnicodeError, ValueError):
+				raise HesapHatasi(hata_metni)
+			if not isinstance(sonuc, dict) or sonuc.get("success") is not True:
+				raise HesapHatasi(hata_metni)
+			return sonuc
+		raise HesapHatasi(hata_metni)
+
+	def gorevi_yeniden_calistir(self, gorev_id):
+		"""Hata durumundaki görevin resmî rerun işlemini sınırlı yeniden denemeyle gönderir."""
+		if isinstance(gorev_id, bool) or not isinstance(gorev_id, int) or gorev_id < 1:
+			raise HesapHatasi(_("Sunucu görevi yeniden çalıştırılamadı."))
+		self._s3_anahtarlarini_al_veya_olustur()
+		govde = json.dumps({"op": "rerun", "task_id": gorev_id}, separators=(",", ":")).encode("utf-8")
+		istek = urllib.request.Request(
+			f"{SUNUCU_ADRESI}{GOREVLER_PATH}",
+			data=govde,
+			headers={
+				"Authorization": f"LOW {self.s3_anahtari}:{self.s3_gizli_anahtari}",
+				"Content-Type": "application/json",
+				"Content-Length": str(len(govde)),
+				"X-Accept-Reduced-Priority": "1",
+			},
+			method="PUT",
+		)
+		sonuc = self._gorev_api_json_istegi(istek, _("Sunucu görevi yeniden çalıştırılamadı."))
+		deger = sonuc.get("value")
+		if not isinstance(deger, dict) or str(gorev_id) not in deger:
+			raise HesapHatasi(_("Sunucu görevi yeniden çalıştırılamadı."))
+		return True
+
 	def dosya_baglantisi(self, eposta, klasor, dosya_adi):
 		"""Dosyanın paylaşılabilir doğrudan indirme bağlantısını üretir."""
+		return self.uzak_dosya_baglantisi(eposta, f"{klasor}/{dosya_adi}")
+
+	def uzak_dosya_baglantisi(self, eposta, uzak_yol):
+		"""Arşiv öğesindeki tam dosya yolunun doğrudan indirme bağlantısını üretir."""
 		oge_kimligi = self.ana_oge_kimligi(eposta)
-		uzak_yol = f"{klasor}/{dosya_adi}"
 		return f"{SUNUCU_ADRESI}/download/{urllib.parse.quote(oge_kimligi)}/{urllib.parse.quote(uzak_yol, safe='/')}"
 
 	def dosya_indir(self, eposta, klasor, dosya_adi, hedef_yol, iptal_olayi):
@@ -557,10 +784,18 @@ class HesapIstemi:
 		for bilgi in sonuc.get("files", []):
 			ad = bilgi.get("name") if isinstance(bilgi, dict) else None
 			kaynak = bilgi.get("source") if isinstance(bilgi, dict) else None
+			bicim = bilgi.get("format") if isinstance(bilgi, dict) else None
+			if (
+				isinstance(ad, str)
+				and (
+					bicim == "Archive BitTorrent"
+					or (kaynak == "metadata" and ad.casefold().endswith("_archive.torrent"))
+				)
+			):
+				continue
 			if (
 				not isinstance(ad, str)
 				or kaynak not in ("original", "derivative")
-				or (kaynak == "derivative" and not turetilmisleri_goster)
 				or ad.startswith(".")
 				or "/" not in ad
 			):
@@ -578,13 +813,15 @@ class HesapIstemi:
 				zaman = int(zaman)
 			except (TypeError, ValueError):
 				zaman = None
-			dosyalar.setdefault(klasor, []).append({
+			dosya = {
 				"ad": goreli_ad,
 				"boyut": boyut,
 				"yukleme_zamani": zaman,
-				"bicim": bilgi.get("format") if isinstance(bilgi.get("format"), str) else None,
+				"bicim": bicim if isinstance(bicim, str) else None,
 				"kaynak": kaynak,
-			})
+			}
+			if kaynak == "original" or turetilmisleri_goster:
+				dosyalar.setdefault(klasor, []).append(dosya)
 		for klasor in dosyalar:
 			dosyalar[klasor].sort(key=lambda dosya: dosya["ad"].casefold())
 		return dosyalar

@@ -1,7 +1,9 @@
 import io
 import importlib.util
+import json
 from pathlib import Path
 import sys
+import tempfile
 import threading
 import types
 import unittest
@@ -57,6 +59,15 @@ class _Yanit:
 
 	def __exit__(self, exc_type, exc, traceback):
 		return False
+
+
+class _JsonYanit(_Yanit):
+	def __init__(self, veri):
+		self.veri = veri
+
+	def read(self, boyut=-1):
+		veri = json.dumps(self.veri).encode("utf-8")
+		return veri if boyut < 0 else veri[:boyut]
 
 
 class YonlendirmeTesti(unittest.TestCase):
@@ -152,6 +163,8 @@ class YenidenDenemeTesti(unittest.TestCase):
 				self.govdeler = []
 
 			def open(self, istek, timeout):
+				if "check_limit=1" in istek.full_url:
+					return _JsonYanit({"over_limit": 0})
 				self.govdeler.append(istek.data.read())
 				if len(self.govdeler) == 1:
 					xml = io.BytesIO(b"<Error><Code>SlowDown</Code><Message>Busy</Message></Error>")
@@ -179,8 +192,301 @@ class YenidenDenemeTesti(unittest.TestCase):
 		self.assertEqual(sonuc, 200)
 		self.assertEqual(istem.acici.govdeler, [b"yeniden", b"yeniden"])
 
+	def test_put_ve_delete_tutarlı_etkilesimli_oncelik_kullanir(self):
+		class SahteAcici:
+			def __init__(self):
+				self.yazma_istekleri = []
+
+			def open(self, istek, timeout):
+				if "check_limit=1" in istek.full_url:
+					return _JsonYanit({"over_limit": 0})
+				self.yazma_istekleri.append(istek)
+				return _Yanit()
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "gizli"
+		istem.acici = SahteAcici()
+		istem._s3_istegi("oge", "Belgeler/a.txt", "PUT", b"a")
+		istem._s3_istegi("oge", "Belgeler/a.txt", "DELETE")
+
+		self.assertEqual(len(istem.acici.yazma_istekleri), 2)
+		for istek in istem.acici.yazma_istekleri:
+			self.assertEqual(istek.get_header("X-archive-interactive-priority"), "1")
+
+	def test_sunucu_yogunken_yazma_istegi_gonderilmez(self):
+		class SahteAcici:
+			def __init__(self):
+				self.yazma_sayisi = 0
+
+			def open(self, istek, timeout):
+				if "check_limit=1" in istek.full_url:
+					return _JsonYanit({"over_limit": 1})
+				self.yazma_sayisi += 1
+				return _Yanit()
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "gizli"
+		istem.acici = SahteAcici()
+		eski_gecikmeler = account_api.S3_YENIDEN_DENEME_GECIKMELERI
+		account_api.S3_YENIDEN_DENEME_GECIKMELERI = (0,)
+		try:
+			with self.assertRaises(account_api.HesapHatasi):
+				istem._s3_istegi("oge", "Belgeler/a.txt", "PUT", b"a")
+		finally:
+			account_api.S3_YENIDEN_DENEME_GECIKMELERI = eski_gecikmeler
+		self.assertEqual(istem.acici.yazma_sayisi, 0)
+
+
+class TurevGorunurluguTesti(unittest.TestCase):
+	def test_turevler_ayara_gore_listelenir_ve_torrent_gizlenir(self):
+		class MetadataYaniti:
+			def __enter__(self):
+				return self
+
+			def __exit__(self, exc_type, exc, traceback):
+				return False
+
+			def read(self):
+				return json.dumps({
+					"files": [
+						{
+							"name": "Ses ve Müzik/ses.wav",
+							"source": "original",
+							"format": "WAVE",
+						},
+						{
+							"name": "Ses ve Müzik/ses_vbr.mp3",
+							"source": "derivative",
+							"original": "Ses ve Müzik/ses.wav",
+							"format": "VBR MP3",
+						},
+						{
+							"name": "oge_archive.torrent",
+							"source": "metadata",
+							"format": "Archive BitTorrent",
+						},
+					],
+				}).encode("utf-8")
+
+		class SahteAcici:
+			def open(self, istek, timeout):
+				return MetadataYaniti()
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.acici = SahteAcici()
+		gizli = istem.tum_dosyalari_al("deneme@example.com", False)
+		gorunur = istem.tum_dosyalari_al("deneme@example.com", True)
+
+		self.assertEqual([dosya["ad"] for dosya in gizli["Ses ve Müzik"]], ["ses.wav"])
+		self.assertEqual(
+			[dosya["ad"] for dosya in gorunur["Ses ve Müzik"]],
+			["ses.wav", "ses_vbr.mp3"],
+		)
+		self.assertNotIn("oge_archive.torrent", [dosya["ad"] for dosya in gorunur["Ses ve Müzik"]])
+
+
+class GorevDurumlariTesti(unittest.TestCase):
+	def test_hata_veren_gorev_resmi_api_ile_yeniden_calistirilir(self):
+		class SahteAcici:
+			def __init__(self):
+				self.istekler = []
+
+			def open(self, istek, timeout):
+				self.istekler.append(istek)
+				return _JsonYanit({"success": True, "value": {"123": "dosya-arsivim-deneme"}})
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "gizli"
+		istem._s3_anahtarlarini_al_veya_olustur = lambda: None
+		istem.acici = SahteAcici()
+
+		self.assertTrue(istem.gorevi_yeniden_calistir(123))
+		istek = istem.acici.istekler[0]
+		self.assertEqual(istek.get_method(), "PUT")
+		self.assertEqual(json.loads(istek.data.decode("utf-8")), {"op": "rerun", "task_id": 123})
+		self.assertEqual(istek.get_header("X-accept-reduced-priority"), "1")
+
+	def test_gorev_yeniden_calistirma_gecici_429_sonrasinda_sinirli_yeniden_denir(self):
+		class SahteAcici:
+			def __init__(self):
+				self.sayi = 0
+
+			def open(self, istek, timeout):
+				self.sayi += 1
+				if self.sayi == 1:
+					raise urllib.error.HTTPError(istek.full_url, 429, "gizli", {}, io.BytesIO(b"gizli"))
+				return _JsonYanit({"success": True, "value": {"123": "dosya-arsivim-deneme"}})
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "gizli"
+		istem._s3_anahtarlarini_al_veya_olustur = lambda: None
+		istem.acici = SahteAcici()
+		eski_gecikmeler = account_api.GOREV_API_YENIDEN_DENEME_GECIKMELERI
+		account_api.GOREV_API_YENIDEN_DENEME_GECIKMELERI = (0,)
+		try:
+			self.assertTrue(istem.gorevi_yeniden_calistir(123))
+		finally:
+			account_api.GOREV_API_YENIDEN_DENEME_GECIKMELERI = eski_gecikmeler
+		self.assertEqual(istem.acici.sayi, 2)
+
+	def test_s3_hata_ayrintisi_yalnizca_guvenli_servis_kodunu_gosterir(self):
+		guvenli = account_api.HesapIstemi._s3_kullanici_hatasi("Yüklenemedi.", 503, "SlowDown")
+		guvensiz = account_api.HesapIstemi._s3_kullanici_hatasi(
+			"Yüklenemedi.", 500, "Authorization LOW anahtar:cok-gizli"
+		)
+
+		self.assertIn("SlowDown", guvenli)
+		self.assertIn("HTTP 500", guvensiz)
+		self.assertNotIn("cok-gizli", guvensiz)
+
+	def test_resmi_durumlar_eslenir_ve_hassas_alanlar_atilir(self):
+		class SahteAcici:
+			def __init__(self):
+				self.istek = None
+
+			def open(self, istek, timeout):
+				self.istek = istek
+				return _JsonYanit({
+					"success": True,
+					"value": {
+						"summary": {"queued": 1, "running": "1", "error": 1, "paused": 1},
+						"catalog": [
+							{"task_id": 11, "cmd": "archive.php", "wait_admin": 0, "submitter": "gizli@example.com"},
+							{"task_id": "12", "cmd": "derive.php", "wait_admin": "1", "args": {"token": "gizli"}},
+							{"task_id": 13, "cmd": "modify_xml.php", "wait_admin": 2, "server": "gizli-sunucu"},
+							{"task_id": 14, "cmd": "archive.php", "wait_admin": 9, "secret": "gizli"},
+						],
+					},
+				})
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "gizli-anahtar"
+		istem._s3_anahtarlarini_al_veya_olustur = lambda: None
+		istem.acici = SahteAcici()
+
+		sonuc = istem.gorev_durumlarini_al("deneme@example.com")
+
+		self.assertEqual([gorev["durum"] for gorev in sonuc["gorevler"]], ["queued", "running", "error", "paused"])
+		self.assertTrue(sonuc["gorevler"][2]["yeniden_calistirilabilir"])
+		self.assertFalse(sonuc["gorevler"][3]["yeniden_calistirilabilir"])
+		self.assertEqual(sonuc["ozet"], {"queued": 1, "running": 1, "error": 1, "paused": 1})
+		metin = repr(sonuc)
+		self.assertNotIn("gizli@example.com", metin)
+		self.assertNotIn("gizli-sunucu", metin)
+		self.assertNotIn("token", metin)
+		self.assertEqual(istem.acici.istek.get_header("Authorization"), "LOW anahtar:gizli-anahtar")
+
+	def test_gorev_api_hatasi_sunucu_govdesini_kullaniciya_sizdirmaz(self):
+		class SahteAcici:
+			def open(self, istek, timeout):
+				govde = io.BytesIO(b'{"error":"Authorization LOW anahtar:cok-gizli"}')
+				raise urllib.error.HTTPError(istek.full_url, 500, "cok-gizli", {}, govde)
+
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "cok-gizli"
+		istem._s3_anahtarlarini_al_veya_olustur = lambda: None
+		istem.acici = SahteAcici()
+
+		with self.assertRaises(account_api.HesapHatasi) as hata:
+			istem.gorev_durumlarini_al("deneme@example.com")
+		self.assertIn("HTTP 500", str(hata.exception))
+		self.assertNotIn("cok-gizli", str(hata.exception))
+
+
+class TurevUretimiTesti(unittest.TestCase):
+	def _yukleme_basliklarini_al(self, turev_uret=True):
+		istekler = []
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.s3_anahtari = "anahtar"
+		istem.s3_gizli_anahtari = "gizli"
+		istem._s3_anahtarlarini_al_veya_olustur = lambda: None
+		istem._s3_istegi = lambda *args, **kwargs: istekler.append(kwargs["ek_basliklar"])
+		with tempfile.TemporaryDirectory() as gecici_klasor:
+			dosya_yolu = Path(gecici_klasor) / "deneme.txt"
+			dosya_yolu.write_bytes(b"deneme")
+			istem.dosya_yukle(
+				"deneme@example.com",
+				"Belgeler",
+				dosya_yolu,
+				turev_uret=turev_uret,
+			)
+		return istekler[0]
+
+	def test_turev_uretimi_kapatilinca_sunucu_basligi_gonderilir(self):
+		basliklar = self._yukleme_basliklarini_al(False)
+		self.assertEqual(basliklar["x-archive-queue-derive"], "0")
+
+	def test_turev_uretimi_acikken_sunucunun_varsayilani_kullanilir(self):
+		basliklar = self._yukleme_basliklarini_al(True)
+		self.assertNotIn("x-archive-queue-derive", basliklar)
+
 
 class KuyrukSirasiTesti(unittest.TestCase):
+	def test_ayni_uzak_dosya_ikinci_kez_kuyruga_eklenmez(self):
+		kuyruk = object.__new__(yukleme_kuyrugu.YuklemeKuyrugu)
+		kuyruk.kilit = threading.RLock()
+		kuyruk._kaydet = lambda: None
+		kuyruk.kayitlar = []
+
+		ilk = kuyruk.ekle("a@example.com", "Belgeler", [r"C:\\Bir\\deneme.txt"])
+		ikinci = kuyruk.ekle(
+			"a@example.com",
+			"Belgeler",
+			[r"D:\\Iki\\DENEME.TXT", r"D:\\Iki\\baska.txt"],
+		)
+
+		self.assertEqual(len(kuyruk.kayitlar), 2)
+		self.assertEqual(len(ilk["eklenenler"]), 1)
+		self.assertEqual(ikinci["yinelenenler"], [r"D:\\Iki\\DENEME.TXT"])
+		self.assertEqual(ikinci["eklenenler"], [r"D:\\Iki\\baska.txt"])
+
+	def test_sunucuda_gorunen_arsivlenmis_yuklemeyi_kuyruktan_temizler(self):
+		kuyruk = object.__new__(yukleme_kuyrugu.YuklemeKuyrugu)
+		kuyruk.kilit = threading.RLock()
+		kaydetme_sayisi = []
+		kuyruk._kaydet = lambda: kaydetme_sayisi.append(1)
+		kuyruk.kayitlar = [
+			{"id": "1", "eposta": "a@example.com", "klasor": "Uygulamalar", "yerel_yol": r"C:\\Dosyalar\\vbrecorder.zip", "durum": "arşivleniyor"},
+			{"id": "2", "eposta": "a@example.com", "klasor": "Uygulamalar", "yerel_yol": r"C:\\Dosyalar\\bekleyen.zip", "durum": "bekliyor"},
+			{"id": "3", "eposta": "a@example.com", "klasor": "Uygulamalar", "yerel_yol": r"C:\\Dosyalar\\turev.zip", "durum": "arşivleniyor"},
+			{"id": "4", "eposta": "b@example.com", "klasor": "Uygulamalar", "yerel_yol": r"C:\\Dosyalar\\vbrecorder.zip", "durum": "arşivleniyor"},
+		]
+
+		tamamlananlar = kuyruk.sunucuda_gorunen_yuklemeleri_tamamla(
+			"a@example.com",
+			{
+				"Uygulamalar": [
+					{"ad": "vbrecorder.zip", "kaynak": "original"},
+					{"ad": "turev.zip", "kaynak": "derivative"},
+				],
+			},
+		)
+
+		self.assertEqual([kayit["id"] for kayit in tamamlananlar], ["1"])
+		self.assertEqual([kayit["id"] for kayit in kuyruk.kayitlar], ["2", "3", "4"])
+		self.assertEqual(len(kaydetme_sayisi), 1)
+
+	def test_beklenmedik_kesintide_yalnizca_etkin_aktarimi_beklemeye_alir(self):
+		kuyruk = object.__new__(yukleme_kuyrugu.YuklemeKuyrugu)
+		kuyruk.kilit = threading.RLock()
+		kuyruk._kaydet = lambda: None
+		kuyruk.kayitlar = [
+			{"id": "1", "eposta": "a@example.com", "klasor": "Uygulamalar", "yerel_yol": "etkin.zip", "durum": "yükleniyor", "yuzde": 70},
+			{"id": "2", "eposta": "a@example.com", "klasor": "Uygulamalar", "yerel_yol": "sunucuda.zip", "durum": "arşivleniyor"},
+		]
+
+		self.assertTrue(kuyruk.beklenmedik_kesintiyi_kurtar("1"))
+		self.assertEqual(kuyruk.kayitlar[0]["durum"], "bekliyor")
+		self.assertNotIn("yuzde", kuyruk.kayitlar[0])
+		self.assertFalse(kuyruk.beklenmedik_kesintiyi_kurtar("2"))
+		self.assertEqual(kuyruk.kayitlar[1]["durum"], "arşivleniyor")
+
 	def test_bekleyen_yukleme_arsivde_islenen_kaydi_beklemez(self):
 		kuyruk = object.__new__(yukleme_kuyrugu.YuklemeKuyrugu)
 		kuyruk.kilit = threading.RLock()

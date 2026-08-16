@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Dosya Arsivim 26.8.14\n"
+"Project-Id-Version: Dosya Arsivim 26.8.15\n"
 "PO-Revision-Date: 2026-07-31 00:00+0300\n"
 "Last-Translator: Mehmet Aykurt\n"
 "Language-Team: English\n"
@@ -141,6 +141,9 @@ msgstr "Settings"
 msgid "Bildirimleri göster"
 msgstr "Show notifications"
 
+msgid "Türev üretimini kapat"
+msgstr "Disable derivative generation"
+
 msgid "Türetilmiş dosyaları göster"
 msgstr "Show derived files"
 
@@ -149,6 +152,20 @@ msgstr "Settings could not be saved."
 
 msgid "{dosya} dosyasının yüklemesi tamamlandı."
 msgstr "Upload completed for {dosya}."
+
+msgid ""
+"{dosya} dosyasının yüklemesi tamamlandı.\n"
+"\n"
+"Dosyanın arşivde işlenmesi, sunucu yoğunluğuna bağlı olarak zaman alabilir. "
+"Bu sırada çalışmalarınıza devam edebilirsiniz."
+msgstr ""
+"The upload of {dosya} has completed.\n"
+"\n"
+"Processing the file in the archive may take some time depending on server "
+"load. You can continue working in the meantime."
+
+msgid "Yükleme tamamlandı"
+msgstr "Upload completed"
 
 msgid "Herhangi bir hesap tanımlı değil."
 msgstr "No account has been configured."
@@ -206,6 +223,9 @@ msgstr "The file could not be downloaded."
 
 msgid "Bağlantıyı panoya kopyala"
 msgstr "Copy link to clipboard"
+
+msgid "&Bağlantıyı kopyala\tAlt+B"
+msgstr "&Copy link\tAlt+C"
 
 msgid "&Bağlantıyı panoya kopyala\tAlt+B"
 msgstr "&Copy link to clipboard\tAlt+C"
@@ -267,11 +287,117 @@ msgstr "De&lete\tAlt+L"
 msgid "Dosyayı sil"
 msgstr "Delete file"
 
-msgid "{dosya} adlı dosyayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-msgstr "Are you sure you want to delete the file named {dosya}? This action cannot be undone."
+msgid ""
+"{dosya} adlı dosyayı silmek istediğinizden emin misiniz?\n"
+"\n"
+"Bu işlem geri alınamaz. Silme isteği sunucuya iletilecektir. Dosyanın "
+"sunucudan kaldırılması, sunucu yoğunluğuna bağlı olarak zaman alabilir; bu "
+"sırada çalışmalarınıza devam edebilirsiniz."
+msgstr ""
+"Are you sure you want to delete the file named {dosya}?\n"
+"\n"
+"This action cannot be undone. The deletion request will be sent to the "
+"server. Depending on server load, removing the file from the server may take "
+"some time; you can continue working in the meantime."
 
 msgid "Dosya silinemedi."
 msgstr "The file could not be deleted."
+
+msgid "Archive.org sunucusu şu anda yoğun. Lütfen işlemi daha sonra yeniden deneyin."
+msgstr "The Archive.org server is currently busy. Please try the operation again later."
+
+msgid "Sunucu işlem durumları alınamadı."
+msgstr "Server operation statuses could not be retrieved."
+
+msgid "Sunucu işlem durumları alınamadı. (HTTP {kod})"
+msgstr "Server operation statuses could not be retrieved. (HTTP {kod})"
+
+msgid "{mesaj} (HTTP {kod})"
+msgstr "{mesaj} (HTTP {kod})"
+
+msgid "Sunucu görevi yeniden çalıştırılamadı."
+msgstr "The server task could not be rerun."
+
+msgid "&Sunucu işlemleri"
+msgstr "&Server operations"
+
+msgid "Sunucu işlemleri"
+msgstr "Server operations"
+
+msgid "Sunucu işlem bilgileri alınıyor."
+msgstr "Retrieving server operation information."
+
+msgid "&Yenile"
+msgstr "&Refresh"
+
+msgid "Hatalı görevi &yeniden çalıştır"
+msgstr "&Rerun failed task"
+
+msgid "Sunucu bilgileri alınamadı. Otomatik olarak yeniden denenecek."
+msgstr "Server information could not be retrieved. It will be retried automatically."
+
+msgid "Sunucu bilgileri alınamadı. Otomatik yenileme durduruldu; Yenile düğmesini kullanabilirsiniz."
+msgstr "Server information could not be retrieved. Automatic refresh has stopped; you can use the Refresh button."
+
+msgid "Kuyrukta"
+msgstr "Queued"
+
+msgid "Çalışıyor"
+msgstr "Running"
+
+msgid "Hata"
+msgstr "Error"
+
+msgid "Duraklatıldı"
+msgstr "Paused"
+
+msgid "Bilinmeyen"
+msgstr "Unknown"
+
+msgid "Arşivleme"
+msgstr "Archiving"
+
+msgid "Türev üretimi"
+msgstr "Derivative generation"
+
+msgid "Arşiv bilgilerini güncelleme"
+msgstr "Updating archive information"
+
+msgid "Yedekleme"
+msgstr "Backup"
+
+msgid "Sunucu görevi: {komut}"
+msgstr "Server task: {komut}"
+
+msgid "Kuyrukta: {kuyrukta}; Çalışıyor: {calisiyor}; Hata: {hata}; Duraklatıldı: {duraklatildi}"
+msgstr "Queued: {kuyrukta}; Running: {calisiyor}; Error: {hata}; Paused: {duraklatildi}"
+
+msgid "Görev {kimlik}: {islem}; durum: {durum}"
+msgstr "Task {kimlik}: {islem}; status: {durum}"
+
+msgid "Etkin sunucu işlemi bulunmuyor."
+msgstr "No active server operation was found."
+
+msgid "{kimlik} numaralı hata görevini yeniden çalıştırmak istiyor musunuz?"
+msgstr "Do you want to rerun failed task number {kimlik}?"
+
+msgid "Görevi yeniden çalıştır"
+msgstr "Rerun task"
+
+msgid "Sunucu görevi yeniden çalıştırılıyor."
+msgstr "The server task is being rerun."
+
+msgid "{kimlik} numaralı sunucu görevi yeniden çalıştırıldı."
+msgstr "Server task number {kimlik} was rerun."
+
+msgid "Sunucu görevi yeniden çalıştırıldı; durum bilgisi yenilenecek."
+msgstr "The server task was rerun; its status will be refreshed."
+
+msgid "{dosya} için silme işlemi zaten devam ediyor."
+msgstr "Deletion is already in progress for {dosya}."
+
+msgid "Zaten yükleme kuyruğunda bulunan dosyalar yeniden eklenmedi: {dosyalar}"
+msgstr "Files already in the upload queue were not added again: {dosyalar}"
 
 msgid "Hesap bilgileriniz kaldırıldı."
 msgstr "Your account information has been removed."

@@ -170,14 +170,29 @@ class DosyaOnbellegi:
 				"INSERT OR IGNORE INTO hesaplar (hesap_kimligi) VALUES (?)",
 				(hesap_kimligi,),
 			)
-			bekleyen_silmeler = {
-				(klasor, ad)
-				for klasor, ad in baglanti.execute(
-					"""SELECT klasor, ad FROM dosyalar
-					WHERE hesap_kimligi = ? AND durum = 'siliniyor'""",
-					(hesap_kimligi,),
-				)
+			bekleyen_silme_islemleri = list(baglanti.execute(
+				"""SELECT id, klasor, dosya_adi FROM islemler
+				WHERE hesap_kimligi = ? AND tur = 'sil'
+				AND durum IN ('bekliyor', 'siliniyor', 'dogrulaniyor')""",
+				(hesap_kimligi,),
+			))
+			sunucudaki_dosyalar = {
+				(klasor, dosya["ad"])
+				for klasor, dosyalar in klasor_dosyalari.items()
+				for dosya in dosyalar
+				if dosya.get("kaynak", "original") == "original"
 			}
+			bekleyen_silmeler = {
+				(klasor, dosya_adi)
+				for _, klasor, dosya_adi in bekleyen_silme_islemleri
+				if (klasor, dosya_adi) in sunucudaki_dosyalar
+			}
+			for islem_id, klasor, dosya_adi in bekleyen_silme_islemleri:
+				if (klasor, dosya_adi) not in sunucudaki_dosyalar:
+					baglanti.execute(
+						"DELETE FROM islemler WHERE id = ? AND hesap_kimligi = ?",
+						(islem_id, hesap_kimligi),
+					)
 			baglanti.execute("DELETE FROM dosyalar WHERE hesap_kimligi = ?", (hesap_kimligi,))
 			baglanti.execute("DELETE FROM klasorler WHERE hesap_kimligi = ?", (hesap_kimligi,))
 			baglanti.executemany(
@@ -187,7 +202,8 @@ class DosyaOnbellegi:
 			for klasor, dosyalar in klasor_dosyalari.items():
 				baglanti.executemany(
 					"""INSERT INTO dosyalar
-					(hesap_kimligi, klasor, ad, boyut, yukleme_zamani, bicim, kaynak, durum, guncelleme_zamani)
+					(hesap_kimligi, klasor, ad, boyut, yukleme_zamani, bicim, kaynak,
+					durum, guncelleme_zamani)
 					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
 					[
 						(
@@ -221,7 +237,8 @@ class DosyaOnbellegi:
 			)
 			baglanti.execute(
 				"""INSERT INTO dosyalar
-				(hesap_kimligi, klasor, ad, boyut, yukleme_zamani, bicim, kaynak, durum, guncelleme_zamani)
+				(hesap_kimligi, klasor, ad, boyut, yukleme_zamani, bicim, kaynak,
+				durum, guncelleme_zamani)
 				VALUES (?, ?, ?, ?, ?, ?, ?, 'yuklendi', ?)
 				ON CONFLICT(hesap_kimligi, klasor, ad) DO UPDATE SET
 					boyut = excluded.boyut,
@@ -232,12 +249,18 @@ class DosyaOnbellegi:
 				guncelleme_zamani = excluded.guncelleme_zamani""",
 				(
 					hesap_kimligi, klasor, dosya["ad"], dosya.get("boyut"),
-					dosya.get("yukleme_zamani"), dosya.get("bicim"), dosya.get("kaynak", "original"), int(time.time()),
+					dosya.get("yukleme_zamani"), dosya.get("bicim"), dosya.get("kaynak", "original"),
+					int(time.time()),
 				),
 			)
 
 	def silmeyi_baslat(self, eposta, klasor, dosya_adi):
 		"""Açık kullanıcı onayıyla silme durumunu yerelde başlatır."""
+		islem_id, _ = self.silmeyi_baslat_ve_durumu_al(eposta, klasor, dosya_adi)
+		return islem_id
+
+	def silmeyi_baslat_ve_durumu_al(self, eposta, klasor, dosya_adi):
+		"""Aynı dosyanın etkin silmesini çoğaltmadan işlem kimliğini ve yenilik durumunu döndürür."""
 		hesap_kimligi = self.hesap_kimligini_al(eposta)
 		simdi = int(time.time())
 		with self._baglan() as baglanti:
@@ -245,6 +268,15 @@ class DosyaOnbellegi:
 				"INSERT OR IGNORE INTO hesaplar (hesap_kimligi) VALUES (?)",
 				(hesap_kimligi,),
 			)
+			mevcut = baglanti.execute(
+				"""SELECT id FROM islemler
+				WHERE hesap_kimligi = ? AND tur = 'sil' AND klasor = ? AND dosya_adi = ?
+				AND durum IN ('bekliyor', 'siliniyor', 'dogrulaniyor')
+				ORDER BY id LIMIT 1""",
+				(hesap_kimligi, klasor, dosya_adi),
+			).fetchone()
+			if mevcut:
+				return mevcut[0], False
 			sonuc = baglanti.execute(
 				"""UPDATE dosyalar SET durum = 'siliniyor', guncelleme_zamani = ?
 				WHERE hesap_kimligi = ? AND klasor = ? AND ad = ?""",
@@ -258,7 +290,7 @@ class DosyaOnbellegi:
 				VALUES (?, 'sil', ?, ?, 'siliniyor', ?)""",
 				(hesap_kimligi, klasor, dosya_adi, simdi),
 			)
-		return kayit.lastrowid
+		return kayit.lastrowid, True
 
 	def bekleyen_silmeleri_al(self, eposta):
 		"""Önceki çalışmadan kalan silmeleri durumlarını değiştirmeden döndürür."""
