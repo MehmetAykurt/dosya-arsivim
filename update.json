@@ -1,6 +1,6 @@
 {
-  "surum": "26.8.14",
-  "link": "https://github.com/MehmetAykurt/dosya-arsivim/releases/download/v26.8.14/dosya-arsivim-v26.8.14.nvda-addon",
-  "sha256": "64673f5f8c445da843907dd3d0dde1616dd1f1a832890379dd9ff8f220bce9eb",
+  "surum": "26.8.15",
+  "link": "https://github.com/MehmetAykurt/dosya-arsivim/releases/download/v26.8.15/dosya-arsivim-v26.8.15.nvda-addon",
+  "sha256": "8ff8267a3eaf1ed5e29627dd6db6902f81be8cc6ddef53850cb8aca137976af6",
   "aciklama": "Arşiviniz artık yükleme ve silme işlemlerini daha güvenli izliyor; siz yolunuza devam ederken dosyalarınız sessizce yerini buluyor."
 }
