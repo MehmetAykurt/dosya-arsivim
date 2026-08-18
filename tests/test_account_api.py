@@ -70,6 +70,36 @@ class _JsonYanit(_Yanit):
 		return veri if boyut < 0 else veri[:boyut]
 
 
+class HesapGirisTesti(unittest.TestCase):
+	def test_csrf_belirteci_guncel_servisten_alinir(self):
+		istem = object.__new__(account_api.HesapIstemi)
+		istekler = []
+
+		def istek(yol, method="GET", veri=None):
+			istekler.append((yol, method, veri))
+			return {"token": "guvenlik-belirteci"}
+
+		istem._istek = istek
+
+		self.assertEqual(istem.csrf_belirteci_al(), "guvenlik-belirteci")
+		self.assertEqual(istekler, [(account_api.CSRF_PATH, "GET", None)])
+
+	def test_eposta_kodu_istegi_csrf_basligini_gonderir(self):
+		istem = object.__new__(account_api.HesapIstemi)
+		istem.csrf_belirteci_al = lambda: "guvenlik-belirteci"
+		istekler = []
+
+		def istek(yol, method="GET", veri=None, ek_basliklar=None):
+			istekler.append((yol, method, veri, ek_basliklar))
+
+		istem._istek = istek
+		istem.eposta_kodu_gonder("kullanici@example.com", False)
+
+		self.assertEqual(istekler[0][0], account_api.OTP_PATH)
+		self.assertEqual(istekler[0][1], "POST")
+		self.assertEqual(istekler[0][3], {"X-CSRF-Token": "guvenlik-belirteci"})
+
+
 class YonlendirmeTesti(unittest.TestCase):
 	def test_put_307_yonlendirmesinde_govdeyi_ve_yetkiyi_korur(self):
 		govdeler = []

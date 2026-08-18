@@ -40,6 +40,7 @@ except NameError:
 
 
 SUNUCU_ADRESI = "https://archive.org"
+CSRF_PATH = "/services/csrf-token"
 LOGIN_PATH = "/services/account/login/"
 OTP_PATH = "/services/account/otp/"
 KAYIT_PATH = "/services/account/signup/"
@@ -278,12 +279,14 @@ class HesapIstemi:
 	def kalici_oturumu_sil(self):
 		OturumDeposu().sil()
 
-	def _istek(self, yol, method="GET", veri=None):
+	def _istek(self, yol, method="GET", veri=None, ek_basliklar=None):
 		govde = None
 		basliklar = {
 			"Accept": "application/json",
-			"User-Agent": "DosyaArsivimNVDA/26.8.15",
+			"User-Agent": "DosyaArsivimNVDA/26.8.18",
 		}
+		if ek_basliklar:
+			basliklar.update(ek_basliklar)
 		if veri is not None:
 			govde = json.dumps(veri).encode("utf-8")
 			basliklar["Content-Type"] = "application/json"
@@ -313,9 +316,9 @@ class HesapIstemi:
 			raise HesapHatasi(hata_mesaji(sonuc, _("İşlem tamamlanamadı.")))
 		return sonuc.get("value")
 
-	def csrf_belirteci_al(self, yol=LOGIN_PATH):
+	def csrf_belirteci_al(self):
 		"""Oturuma bağlı, kısa ömürlü CSRF belirtecini alır."""
-		sonuc = self._istek(yol)
+		sonuc = self._istek(CSRF_PATH)
 		belirtec = sonuc.get("token") if isinstance(sonuc, dict) else None
 		if not belirtec:
 			raise HesapHatasi(_("Güvenlik belirteci alınamadı."))
@@ -323,7 +326,7 @@ class HesapIstemi:
 
 	def eposta_kodu_gonder(self, eposta, kayit_icin):
 		"""E-posta ile giriş veya kayıt için altı haneli kod ister."""
-		belirtec = self.csrf_belirteci_al(KAYIT_PATH if kayit_icin else LOGIN_PATH)
+		belirtec = self.csrf_belirteci_al()
 		self._istek(
 			OTP_PATH,
 			method="POST",
@@ -332,6 +335,7 @@ class HesapIstemi:
 				"token": belirtec,
 				"sender_page": "sign up" if kayit_icin else "log in",
 			},
+			ek_basliklar={"X-CSRF-Token": belirtec},
 		)
 		self.bekleyen_kod_belirteci = belirtec
 		self.bekleyen_kod_epostasi = eposta
@@ -346,7 +350,7 @@ class HesapIstemi:
 		):
 			belirtec = self.bekleyen_kod_belirteci
 		else:
-			belirtec = self.csrf_belirteci_al(KAYIT_PATH if kayit_icin else LOGIN_PATH)
+			belirtec = self.csrf_belirteci_al()
 		veri = {
 			"email": eposta,
 			"passcode": kod,
@@ -355,7 +359,12 @@ class HesapIstemi:
 		}
 		if kayit_icin:
 			veri["screenname"] = ekran_adi
-		return self._istek(OTP_PATH, method="POST", veri=veri)
+		return self._istek(
+			OTP_PATH,
+			method="POST",
+			veri=veri,
+			ek_basliklar={"X-CSRF-Token": belirtec},
+		)
 
 	@staticmethod
 	def ana_oge_kimligi(eposta):
