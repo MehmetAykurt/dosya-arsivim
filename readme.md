@@ -1,5 +1,17 @@
 # Dosya Arşivim
 
+## Önemli duyuru: Geliştirme sonlandırılmıştır
+
+Dosya Arşivim eklentisinin geliştirilmesi, 25 Eylül 2026 tarihi itibarıyla sonlandırılmıştır.
+
+Eklentinin çalışması için kullanılan sunucu altyapısının kararlı ve güvenilir bir çalışma deneyimi sunamaması nedeniyle projenin sürdürülebilirliği kalmamıştır. Bu nedenle bundan sonra yeni sürüm yayımlanmayacak; hata düzeltmesi, yeni özellik ve güncel NVDA sürümleri için uyumluluk çalışması yapılmayacaktır.
+
+Mevcut sürüm kullanılmaya devam edilebilir. Ancak eklentinin bağlı olduğu sunucu hizmetindeki sorunlar nedeniyle eklentinin bütün işlevlerinin düzgün ve kesintisiz çalışacağı garanti edilmemektedir. Kullanıcıların önemli dosyalarının tek kopyasını bu hizmette tutmamaları ve gerekli yedekleri kendi bilgisayarlarında veya güvenilir başka bir ortamda saklamaları önerilir.
+
+Projenin kaynak kodu ve yayımlanmış önceki sürümleri, inceleme ve arşiv amacıyla erişime açık tutulacaktır.
+
+Anlayışınız için teşekkür ederim.
+
 **Dosya Arşivim**, NVDA ekran okuyucusu kullanıcılarının dosyalarını erişilebilir biçimde saklamasını, düzenlemesini, indirmesini ve paylaşmasını sağlayan bir eklentidir.
 
 Eklenti, hesap işlemlerini e-posta ile gönderilen tek kullanımlık kodla yürütür. Parola eklenti içinde saklanmaz. Dosya listeleri yerel SQLite önbelleğinde tutulur ve sunucuyla arka planda eşitlenir.
