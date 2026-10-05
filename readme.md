@@ -4,11 +4,21 @@
 
 Dosya Arşivim eklentisinin geliştirilmesi, 25 Eylül 2026 tarihi itibarıyla sonlandırılmıştır.
 
-Eklentinin çalışması için kullanılan sunucu altyapısının kararlı ve güvenilir bir çalışma deneyimi sunamaması nedeniyle projenin sürdürülebilirliği kalmamıştır. Bu nedenle bundan sonra yeni sürüm yayımlanmayacak; hata düzeltmesi, yeni özellik ve güncel NVDA sürümleri için uyumluluk çalışması yapılmayacaktır.
+Eklentinin çalışması için kullanılan sunucu altyapısının kararlı ve güvenilir bir çalışma deneyimi sunamaması nedeniyle projenin sürdürülebilirliği kalmamıştır. Bu nedenle bundan sonra tarafımdan yeni sürüm yayımlanmayacak; hata düzeltmesi, yeni özellik ve güncel NVDA sürümleri için uyumluluk çalışması yapılmayacaktır.
 
 Mevcut sürüm kullanılmaya devam edilebilir. Ancak eklentinin bağlı olduğu sunucu hizmetindeki sorunlar nedeniyle eklentinin bütün işlevlerinin düzgün ve kesintisiz çalışacağı garanti edilmemektedir. Kullanıcıların önemli dosyalarının tek kopyasını bu hizmette tutmamaları ve gerekli yedekleri kendi bilgisayarlarında veya güvenilir başka bir ortamda saklamaları önerilir.
 
 Projenin kaynak kodu ve yayımlanmış önceki sürümleri, inceleme ve arşiv amacıyla erişime açık tutulacaktır.
+
+### Geliştirmeye devam etmek isteyenlere
+
+Dosya Arşivim'i geliştirmeyi sürdürmek isteyen geliştiriciler, GitHub'daki Fork (çatallama) özelliğiyle bu deponun kendi hesaplarında bir kopyasını oluşturabilir; kaynak kodunu inceleyebilir, hataları giderebilir, yeni özellikler ekleyebilir ve geliştirdikleri sürümleri yayımlayabilirler. Projede yer alan dosyalar, mevcut GNU Genel Kamu Lisansı sürüm 2 (GPL v2) koşulları çerçevesinde bu amaçlarla kullanılabilir.
+
+Bu çalışmalarda özgün geliştirici Mehmet Aykurt'a ait telif bildirimleri, mevcut lisans metni ve diğer telif bildirimleri korunmalı; yapılan değişiklikler ve değişiklik tarihleri açıkça belirtilmelidir. Dağıtılan türev çalışmaların kaynak kodu da GPL v2 koşullarına uygun biçimde sunulmalıdır. Projenin başlangıç noktasının anlaşılabilmesi için bu depoya bağlantı verilmesini rica ederim.
+
+Kendi kopyanızda sürdüreceğiniz geliştirme ve yayımlayacağınız sürümlerin bakımını siz üstlenebilirsiniz. Benim bu depo üzerinden geliştirme ve destek çalışmalarımı sonlandırmış olmam, başkalarının projeyi sürdürmesine engel değildir.
+
+Bu çalışmanın NVDA kullanıcılarına daha kararlı ve yararlı bir eklenti olarak ulaşmasına katkıda bulunmak isteyen herkese şimdiden teşekkür ederim.
 
 Anlayışınız için teşekkür ederim.
 
